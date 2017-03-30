@@ -37,6 +37,11 @@ class MainFom(QtWidgets.QWidget):
         self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QIntValidator())
         self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QIntValidator())
 
+        for i in range(7):
+            self.tableWidget.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab), "История показаний")
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
+
         self.profs = Profjilcom()
         if not self.profs.authorized:
             self.profs.get_capcha_img()
@@ -72,7 +77,7 @@ class MainFom(QtWidgets.QWidget):
                 self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
                 self.auth()
             except:
-                self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером")
+                self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
         else:
             self.show_error("Пустые поля", "Все поля должны быть заполнены!")
     
