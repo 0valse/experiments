@@ -12,6 +12,7 @@ from PyQt5.QtCore import pyqtSlot
 
 from prof import Profjilcom, NotAthorized
 
+
 class AuthDialog(QtWidgets.QDialog):
     def __init__(self, *args):
         super(AuthDialog, self).__init__(*args)
@@ -25,8 +26,15 @@ class MainFom(QtWidgets.QWidget):
 
         self.AuthDialog = AuthDialog()
 
-        self.sendButton.clicked.connect(self.send)
         self.closeButton.clicked.connect(self.quit)
+
+        self.hvs_hvs_kuhnya.setValidator(QtGui.QIntValidator())
+        self.hvs_hvs_vannaya.setValidator(QtGui.QIntValidator())
+        self.gvs_gvs_kuhnya.setValidator(QtGui.QIntValidator())
+        self.gvs_gvs_vannaya.setValidator(QtGui.QIntValidator())
+        self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QIntValidator())
+        self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QIntValidator())
+        self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QIntValidator())
 
         self.profs = Profjilcom()
         if not self.profs.authorized:
@@ -35,8 +43,6 @@ class MainFom(QtWidgets.QWidget):
             pic.loadFromData(self.profs.captcha_img)
             self.AuthDialog.capcha_label.setPixmap(pic)
             self.auth()
-
-        print(dir(self))
 
     @pyqtSlot()
     def on_DisconnectButton_clicked(self):
@@ -57,17 +63,17 @@ class MainFom(QtWidgets.QWidget):
         t1 = self.prochie_pokazaniya_elektroenergiya.text()
         t2 = self.prochie_pokazaniya_t2_noch.text()
         teplo = self.potreblenie_tepla_schetchik_1.text()
-        if not (hvs_kuhnya or hvs_vannaya or gvs_vannaya or gvs_kuhnya or t1 or t2 or teplo):
-            #TODO: show error window
-            print("Not enoth params")
-        else:
+
+        if (hvs_kuhnya and hvs_vannaya and gvs_vannaya and gvs_kuhnya and t1 and t2 and teplo):
             try:
                 self.profs.send_pokazaniya(hvs_kuhnya, hvs_vannaya, gvs_vannaya, gvs_kuhnya, t1, t2, teplo)
-            #except NotAthorized:
-            #    self.auth()
+            except NotAthorized:
+                self.show_warning("Not authorized", "Need authorized first")
+                self.auth()
             except:
-                #TODO: show error window
-                self.close()
+                self.show_error("Connection error", "Catch error while connect")
+        else:
+            self.show_error("Empty inputs", "Need type pokazaniya")
     
     def quit(self):
         self.profs.logout()
@@ -81,16 +87,26 @@ class MainFom(QtWidgets.QWidget):
             pswd = self.AuthDialog.passwordEdit.text()
             capcha = self.AuthDialog.capchaEdit.text()
         else:
-            #TODO: err not authorized
-            print("Err")
             return
-        self.UserLabel.setText(user)
-        self.statusLabel.setText("Authorized")
-        self.DisconnectButton.setText("Disconnect")
-        #self.profs.auth(user, pswd, capcha)[0]
-    
-    def send(self):
-        pass
+
+        try:
+            self.profs.auth(user, pswd, capcha)
+        except NotAthorized:
+            self.show_error("Not authorized", "Error username or password")
+        else:
+            self.UserLabel.setText(user)
+            self.statusLabel.setText("Authorized")
+            self.DisconnectButton.setText("Disconnect")
+
+    def show_warning(self, title, msg):
+        return self._show_MSG(QtWidgets.QMessageBox.warning, title, msg)
+    def show_error(self, title, msg):
+        return self._show_MSG(QtWidgets.QMessageBox.critical, title, msg)
+    def _show_MSG(self, status=QtWidgets.QMessageBox.warning, title="", msg=""):
+        result = status(self, title, msg,
+                        QtWidgets.QMessageBox.Cancel,
+                        QtWidgets.QMessageBox.Cancel)
+        return result
 
 
 if __name__ == "__main__":

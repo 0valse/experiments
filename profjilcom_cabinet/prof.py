@@ -1,7 +1,9 @@
 import requests
 from re import search
+from configparser import ConfigParser
+import os
 
-url  = 'http://cabinet.profjilkom.ru/'
+url = 'http://cabinet.profjilkom.ru/'
 
 captcha_img = r'<img\ssrc="(/image_captcha/\d+/\d+)"\s(.+)'
 captcha_sid = r'<input\stype="hidden"\sname="captcha_sid"\sid="edit-captcha-sid"\svalue="(.+)"'
@@ -23,13 +25,43 @@ headers = {'User-agent': 'Mozilla/5.0',
             'Referer': 'http://cabinet.profjilkom.ru/node/1'}
 
 
+class Conf:
+    c = ConfigParser()
+    section = "COOKIES"
+
+    def __init__(self):
+        if os.environ.get('HOME', None) is not None:
+            self.conf_file = os.path.join(os.path.expanduser("~"),
+                                          ".config", "prof.ini")
+        if os.path.isfile(self.conf_file):
+            self.c.read_file(self.conf_file)
+            self.c.set(self.section, 'has_js', '1')
+        if not self.c.has_section(self.section):
+            self.c.add_section(self.section)
+
+
+    def get_cookies(self):
+        cook = dict()
+        for v, k in self.c.items(self.section):
+            cook[v] = k
+        return requests.cookies.cookiejar_from_dict(cook)
+
+    def set_cookie(self, cookies):
+        assert type(cookies, (requests.cookies.RequestsCookieJar, dict)), "cookie must have a cookie type"
+        [self.c.set(self.section, k, v) for v, k in cookies.items()]
+
+    def _update(self):
+        with open(self.conf_file, 'w') as f:
+            self.c.write(f)
+
 class NotAthorized(ConnectionError):
     pass
 
 class Profjilcom:
+    conf = Conf()
+
     def __init__(self):
         self.response = None
-        self.cookies = None
         self.form_id = None
         self.form_value = None
         self.captcha_sid = None
@@ -37,21 +69,18 @@ class Profjilcom:
         self.captcha_img = None
 
         self.authorized = False
+        self.cookies = self.conf.get_cookies()
 
         self._connect()
 
-        #TODO: load cookies from file
-
     def _connect(self):
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=headers, cookies=self.cookies)
         resp.close()
         if resp.status_code == 403:
             raise NotAthorized("Not authorized access")
         if not resp.ok:
             raise ConnectionError("Coud not connect to %s. Code: %s" % (url, resp.status_code))
         self.response = resp.content.decode()
-        self.cookies = resp.cookies
-        self.cookies.update(dict(has_js='1'))
         self._form()  # form sets
 
     def _form(self):
@@ -93,7 +122,8 @@ class Profjilcom:
         #form = {
         #    "op": '%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C',  # отправить
         #        }
-        #r = requests.post('http://cabinet.profjilkom.ru/node/1', form, cookies=self.cookies, headers=headers,
+        #r = requests.post('http://cabinet.profjilkom.ru/node/1',
+                        # form, cookies=self.cookies, headers=headers,
         #                  allow_redirects=False)
         #r.close()
         #if not r.ok:
@@ -117,18 +147,21 @@ class Profjilcom:
                     "form_build_id": self.form_value,
                     "form_id": "user_login_block"
                 }
-        r = requests.post(url+'/node/1?destination=node%2F1', form, cookies=self.cookies, headers=headers, allow_redirects=False)
+        r = requests.post(url+'/node/1?destination=node%2F1', form,
+                          cookies=self.cookies, headers=headers, allow_redirects=False)
         r.close()
         self.cookies.update(r.cookies)
 
         if r.status_code == 302:
-            r = requests.get('http://cabinet.profjilkom.ru/node/1', cookies=self.cookies, headers=headers)
+            r = requests.get('http://cabinet.profjilkom.ru/node/1',
+                             cookies=self.cookies, headers=headers)
             r.close()
-        if not r.ok:
-            raise ConnectionError("Coud not connect to %s. Errcode: %s" % (url, r.status_code))
+            if r.status_code == 402:
+                raise NotAthorized("Not authorized access")
+
         self.authorized = True
-        
-        return r.status_code, r
+        self.conf.set_cookie(self.cookies)
+
     
     def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya, gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
         form = {
@@ -141,7 +174,8 @@ class Profjilcom:
             potreblenie_tepla_schetchik_1: teplo,
             "op": '%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C',  #отправить
                 }
-        r = requests.post('http://cabinet.profjilkom.ru/node/1', form, cookies=self.cookies, headers=headers, allow_redirects=False)
+        r = requests.post('http://cabinet.profjilkom.ru/node/1', form, cookies=self.cookies,
+                          headers=headers, allow_redirects=False)
         r.close()
         if r.status_code == 403:
             raise NotAthorized("Not authorized access")
