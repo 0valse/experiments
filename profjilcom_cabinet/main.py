@@ -18,6 +18,7 @@ class AuthDialog(QtWidgets.QDialog):
         super(AuthDialog, self).__init__(*args)
         loadUi('authenticationdialog.ui', self)
 
+
 class MainFom(QtWidgets.QWidget):
     def __init__(self, *args):
         super(MainFom, self).__init__(*args)
@@ -48,9 +49,9 @@ class MainFom(QtWidgets.QWidget):
     def on_DisconnectButton_clicked(self):
         if self.profs.authorized:
             self.profs.logout()
-            self.UserLabel.setText("Unknown")
-            self.statusLabel.setText("NOT Authorized")
-            self.DisconnectButton.setText("Connect")
+            self.UserLabel.setText("Аноним")
+            self.statusLabel.setText("Не авторизован")
+            self.DisconnectButton.setText("Соединиться")
         else:
             self.auth()
 
@@ -68,12 +69,12 @@ class MainFom(QtWidgets.QWidget):
             try:
                 self.profs.send_pokazaniya(hvs_kuhnya, hvs_vannaya, gvs_vannaya, gvs_kuhnya, t1, t2, teplo)
             except NotAthorized:
-                self.show_warning("Not authorized", "Need authorized first")
+                self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
                 self.auth()
             except:
-                self.show_error("Connection error", "Catch error while connect")
+                self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером")
         else:
-            self.show_error("Empty inputs", "Need type pokazaniya")
+            self.show_error("Пустые поля", "Все поля должны быть заполнены!")
     
     def quit(self):
         self.profs.logout()
@@ -92,11 +93,11 @@ class MainFom(QtWidgets.QWidget):
         try:
             self.profs.auth(user, pswd, capcha)
         except NotAthorized:
-            self.show_error("Not authorized", "Error username or password")
+            self.show_error("Ошибка авторизации", "Ошибка авторизации. Не верный логин или пароль!")
         else:
             self.UserLabel.setText(user)
-            self.statusLabel.setText("Authorized")
-            self.DisconnectButton.setText("Disconnect")
+            self.statusLabel.setText("Авторизован")
+            self.DisconnectButton.setText("Разьединить")
 
     def show_warning(self, title, msg):
         return self._show_MSG(QtWidgets.QMessageBox.warning, title, msg)
