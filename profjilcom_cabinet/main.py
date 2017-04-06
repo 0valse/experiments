@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.8
-#
-# WARNING! All changes made in this file will be lost!
+# pie charts http://matplotlib.org/examples/pie_and_polar_charts/pie_demo_features.html
 
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui, QtWidgets
@@ -28,35 +24,41 @@ class MainFom(QtWidgets.QWidget):
 
         loadUi('main.ui', self)
 
-        self.closeButton.clicked.connect(self.quit)
+        self.closeButton.clicked.connect(self.goout)
         self.sendButton.clicked.connect(self.send)
 
         self.profs = Profjilcom()
 
         self.AuthDialog = AuthDialog()
 
-        if self.profs.user is not None:
+    def set_authorize(self, authorized):
+        if not authorized:
+            self.authorized = True
+            self.UserLabel.setText(self.profs.username)
+            self.statusLabel.setText("Авторизован")
+            self.DisconnectButton.setText("Выйти")
+            self.sendButton.setEnabled(True)
+        else:
+            self.authorized = False
+            self.UserLabel.setText("Аноним")
+            self.statusLabel.setText("Не авторизован")
+            self.DisconnectButton.setText("Войти на сайт")
+            self.sendButton.setEnabled(False)
+
+    @property
+    def authorized(self):
+        return self.profs.authorized
+    @authorized.setter
+    def authorized(self, authorized):
+        self.profs.authorized = authorized
+
+    def set_form_values(self):
+        if self.profs.username is not None:
             self.AuthDialog.userEdit.setText(self.profs.username)
             self.AuthDialog.passwordEdit.setFocus()
-        if self.profs.password is not None:
-            self.AuthDialog.passwordEdit.setText(self.profs.password)
-            self.AuthDialog.savepass_checkBox.setChecked(True)
-            self.AuthDialog.capchaEdit.setFocus()
-
-        try:
-            self.profs.connect(auth_url)
-        except NotAthorized:
-            self.profs.authorized = False
-            self.auth()
-            #self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
-        except ConfFail:
-            self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
-        except ServerError:
-            self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
-        except SiteStructFail:
-            self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
-
-        print('Create table', PokazaniyaDB().create_tables(self.profs.username))
+        #if self.profs.password is not None:
+        #    self.AuthDialog.passwordEdit.setText(self.profs.password)
+        #    self.AuthDialog.capchaEdit.setFocus()
 
         self.hvs_hvs_kuhnya.setValidator(QtGui.QIntValidator())
         self.hvs_hvs_vannaya.setValidator(QtGui.QIntValidator())
@@ -65,6 +67,33 @@ class MainFom(QtWidgets.QWidget):
         self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QIntValidator())
         self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QIntValidator())
         self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QIntValidator())
+
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab), "История показаний")
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
+
+        #check needs auth
+        self.set_authorize(self._connect(auth_url))
+
+    def _connect(self, url, drop_auth=False):
+        ret = False
+        try:
+            self.profs.connect(url)
+        except NotAthorized:
+            self.set_authorize(False)
+            if drop_auth:
+                self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
+            #self.auth()
+        except ConfFail:
+            self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
+        except ServerError:
+            self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
+        except SiteStructFail:
+            self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
+        ret = True
+        return ret
+
+    def get_pokazaniya(self):
+        print('Create table', PokazaniyaDB().create_tables(self.profs.username))
 
         self.model = QSqlTableModel(self)
         self.model.setTable(self.profs.username)
@@ -81,18 +110,12 @@ class MainFom(QtWidgets.QWidget):
         self.model.setHeaderData(7, Qt.Horizontal, "Отопление")
         self.tableView.setModel(self.model)
 
-        #for i in range(self.model.rowCount()):
+        # for i in range(self.model.rowCount()):
         #    self.tableView.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab), "История показаний")
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
-
-        if self.profs.authorized:
-            pokazs = self.profs.get_all_pokazaniya()
-            print(pokazs)
-            print(self.profs.username)
-            self.profs.sync2db(pokazs)
+        if self.authorized:
+            self.profs.sync2db(self.profs.get_all_pokazaniya())
 
     def _set_capcha_img(self):
         self.profs.get_capcha_img()
@@ -102,12 +125,9 @@ class MainFom(QtWidgets.QWidget):
 
     @pyqtSlot()
     def on_DisconnectButton_clicked(self):
-        if self.profs.authorized:
+        if self.authorized:
             self.profs.logout()
-            self.UserLabel.setText("Аноним")
-            self.statusLabel.setText("Не авторизован")
-            self.DisconnectButton.setText("Соединиться")
-            self.sendButton.setEnabled(True)
+            self.set_authorize(False)
         else:
             self.auth()
 
@@ -131,16 +151,12 @@ class MainFom(QtWidgets.QWidget):
         else:
             self.show_error("Пустые поля", "Все поля должны быть заполнены!")
     
-    def quit(self):
-        self.profs.logout()
+    def goout(self):
         self.close()
 
     def auth(self):
-        try:
-            self._set_capcha_img()
-        except SiteStructFail:
-            self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
-            return
+        self._connect(auth_url, drop_auth=True)
+        self.profs.get_auth_form_values()
 
         self.AuthDialog.capchaEdit.clear()
         self.AuthDialog.show()
@@ -158,8 +174,7 @@ class MainFom(QtWidgets.QWidget):
             self.show_error("Ошибка авторизации", "Не верный логин или пароль!")
         else:
             self.UserLabel.setText(user)
-            self.statusLabel.setText("Авторизован")
-            self.DisconnectButton.setText("Разьединить")
+            self.set_authorize(True)
 
             self.profs.username = user
             if self.AuthDialog.savepass_checkBox.isChecked():
@@ -172,10 +187,9 @@ class MainFom(QtWidgets.QWidget):
     def show_error(self, title, msg):
         return self._show_MSG(QtWidgets.QMessageBox.critical, title, msg)
     def _show_MSG(self, status=QtWidgets.QMessageBox.warning, title="", msg=""):
-        result = status(self, title, msg,
+        return status(self, title, msg,
                         QtWidgets.QMessageBox.Cancel,
                         QtWidgets.QMessageBox.Cancel)
-        return result
 
 
 if __name__ == "__main__":
@@ -183,4 +197,6 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     ui = MainFom()
     ui.show()
+    ui.set_form_values()
+    ui.get_pokazaniya()
     sys.exit(app.exec_())

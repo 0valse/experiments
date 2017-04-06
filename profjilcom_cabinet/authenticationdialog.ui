@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>352</width>
-    <height>265</height>
+    <height>247</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -159,13 +159,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="savepass_checkBox">
-         <property name="text">
-          <string>Запомнить пароль</string>
-         </property>
-        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">

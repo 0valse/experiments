@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1126</width>
+    <width>1236</width>
     <height>519</height>
    </rect>
   </property>
@@ -131,7 +131,7 @@
      <item>
       <widget class="QPushButton" name="DisconnectButton">
        <property name="text">
-        <string>Соединиться</string>
+        <string>Войти на сайт</string>
        </property>
       </widget>
      </item>
@@ -159,22 +159,6 @@
        </item>
        <item row="1" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_14">
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>2</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
          <item>
           <widget class="QTableView" name="tableView">
            <property name="editTriggers">
@@ -755,8 +739,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>400</y>
+     <x>1228</x>
+     <y>511</y>
     </hint>
     <hint type="destinationlabel">
      <x>411</x>

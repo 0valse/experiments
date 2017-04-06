@@ -129,6 +129,13 @@ class PokazaniyaDB(FakeDB):
     def save2db(self, user, args):
         #arg: list of dict
         for kwargs in args:
+
+            print("""
+                REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+                VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+                d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+                gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
+
             self.query.prepare("""
                 REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
                 VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
@@ -148,11 +155,10 @@ class PokazaniyaDB(FakeDB):
 
 class Conf:
     config = ConfigParser()
-    section = "COOKIES"
     account = "ACCOUNT"
     COOKS = requests.utils.cookiejar_from_dict({'has_js': '1'})
     username = None
-    pswd = None
+    last_update = datetime.now().timestamp()
 
     def __init__(self):
         self.conf_file = os.path.join(os.path.expanduser("~"),
@@ -172,15 +178,13 @@ class Conf:
             self.config.add_section(self.account)
 
         d = dict(self.config.items(self.account))
-        self.pswd = d.get('password', None)
         self.username = d.get('username', None)
+        self.last_update = int(d.get("last_update", datetime.now().timestamp()))
         self.cookies.update(self._loads(d.get('cookies', self._dumps(dict()))))
 
     def _dumps(self, raw):
-        print(raw)
         return base64.encodebytes((pickle.dumps(raw))).decode()
     def _loads(selfs, raw):
-        print(raw)
         return pickle.loads(base64.decodebytes(raw.encode()))
 
     @property
@@ -194,16 +198,9 @@ class Conf:
     def user(self, username):
         self.username = username
 
-    @property
-    def password(self):
-        return self.pswd
-    @password.setter
-    def password(self, password):
-        self.pswd = password
-
     def save(self):
         self.config.set(self.account, 'username', self.username)
-        self.config.set(self.account, 'password', self.pswd)
+        self.config.set(self.account, 'last_update', str(int(self.last_update)))
         self.config.set(self.account, 'cookies', self._dumps(self.COOKS))
         with open(self.conf_file, 'w') as f:
             self.config.write(f)
@@ -232,9 +229,7 @@ class Profjilcom(Conf):
             raise ConnectionError("Coud not connect to %s. Code: %s" % (url, resp.status_code))
         self.response = resp.content.decode()
 
-        self._form()  # form sets
-
-    def _form(self):
+    def get_auth_form_values(self):
         sf_id = search(form_id, self.response)
         if not sf_id:
             raise SiteStructFail("No sf_id find")
@@ -301,14 +296,15 @@ class Profjilcom(Conf):
             r = requests.get(pokaz_url,
                              cookies=self.cookies, headers=headers)
             r.close()
+
             if r.status_code == 403:
                 print('403')
                 raise NotAthorized("Not authorized access")
 
         self.authorized = True
-
         self.username = user
         self.password = pswd
+        self.cookies.update(r.cookies)  # update session cookies
         self.save()
 
     
@@ -377,8 +373,11 @@ class Profjilcom(Conf):
                        )
             line += 1
 
+        print(tmp)
+
         return tmp
 
     def sync2db(self, pokaz):
-        print(self.username)
+        self.last_update = datetime.now().timestamp()
         PokazaniyaDB().save2db(self.username, pokaz)
+        self.save()
