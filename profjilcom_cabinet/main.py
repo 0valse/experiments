@@ -147,6 +147,7 @@ class MainFom(QtWidgets.QWidget):
         # for i in range(self.model.rowCount()):
         #    self.tableView.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        print('is auth', self.authorized)
 
         if self.authorized:
             self.profs.sync2db(self.profs.get_all_pokazaniya())

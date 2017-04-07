@@ -95,26 +95,32 @@ class FakeDB:
 
     def create_tables(self, user):
         query = QSqlQuery(self.db)
-        return query.exec_("""
+        ret = query.exec_("""
             CREATE TABLE {table} (
-            {d}	INTEGER NOT NULL UNIQUE,
-            {hv}	INTEGER NOT NULL,
-            {hk}	INTEGER NOT NULL,
-            {gv}	INTEGER NOT NULL,
-            {gk}	INTEGER NOT NULL,
-            {t1}	INTEGER NOT NULL,
-            {t2}	INTEGER NOT NULL,
-            {T}	INTEGER NOT NULL);""".format(
+            {d}	TEXT NOT NULL UNIQUE,
+            {hv}	TEXT NOT NULL,
+            {hk}	TEXT NOT NULL,
+            {gv}	TEXT NOT NULL,
+            {gk}	TEXT NOT NULL,
+            {t1}	TEXT NOT NULL,
+            {t2}	TEXT NOT NULL,
+            {T}	TEXT NOT NULL);""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
         )
+        self.db.commit()
+        print(query.lastError().text())
+        return ret
 
     def _test_data(self, user):
         query = QSqlQuery(self.db)
-        return query.exec_("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                VALUES(datetime('now'), '10 м', '11 м', '12 м', '45 м', '10 к', '12 к', '134 к');""".format(
+        ret = query.exec_("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+                VALUES(date('now'), '10 м', '11 м', '12 м', '45 м', '10 к', '12 к', '134 к');""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
+        print(query.lastError().text())
+        self.db.commit()
+        return ret
 
 
 class PokazaniyaDB(FakeDB):
@@ -144,6 +150,7 @@ class PokazaniyaDB(FakeDB):
                 d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
                 gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
             )
+            print(Date, kwargs[Date], HVS_vanna, kwargs[HVS_vanna])
             query.bindValue(":%s" % Date, kwargs[Date])
             query.bindValue(":%s" % HVS_vanna, kwargs[HVS_vanna])
             query.bindValue(":%s" % HVS_kuhnya, kwargs[HVS_kuhnya])
@@ -153,6 +160,7 @@ class PokazaniyaDB(FakeDB):
             query.bindValue(":%s" % T2, kwargs[T2])
             query.bindValue(":%s" % Teplo, kwargs[Teplo])
             print('save one record', query.exec_())
+        print('commit', self.db.commit())
 
 
 class Conf:
@@ -160,7 +168,7 @@ class Conf:
     account = "ACCOUNT"
     COOKS = requests.utils.cookiejar_from_dict({'has_js': '1'})
     username = None
-    last_update = datetime.now().timestamp()
+    last_update = datetime.now().date().isoformat()
 
     def __init__(self):
         self.conf_file = os.path.join(os.path.expanduser("~"),
@@ -181,7 +189,7 @@ class Conf:
 
         d = dict(self.config.items(self.account))
         self.username = d.get('username', None)
-        self.last_update = int(d.get("last_update", datetime.now().timestamp()))
+        self.last_update = d.get("last_update", datetime.now().date().isoformat())
         self.cookies.update(self._loads(d.get('cookies', self._dumps(dict()))))
 
     def _dumps(self, raw):
@@ -202,7 +210,7 @@ class Conf:
 
     def save(self):
         self.config.set(self.account, 'username', self.username)
-        self.config.set(self.account, 'last_update', str(int(self.last_update)))
+        self.config.set(self.account, 'last_update', self.last_update)
         self.config.set(self.account, 'cookies', self._dumps(self.COOKS))
         with open(self.conf_file, 'w') as f:
             self.config.write(f)
@@ -382,7 +390,7 @@ class Profjilcom(Conf):
             tmp.append(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya, GVS_vanna=gvs_vannaya,
                  GVS_kuhnya=gvs_kuhnya, T1=t1, T2=t2, Teplo=teplo,
                  Date=datetime.strptime(date.replace(" ", ""),
-                                        '%m/%d/%Y-%H:%M').timestamp())
+                                        '%m/%d/%Y-%H:%M').date().isoformat())
                        )
             line += 1
 
@@ -391,6 +399,6 @@ class Profjilcom(Conf):
         return tmp
 
     def sync2db(self, pokaz):
-        self.last_update = datetime.now().timestamp()
+        self.last_update = datetime.now().date().isoformat()
         PokazaniyaDB().save2db(self.username, pokaz)
         self.save()
