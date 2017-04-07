@@ -88,14 +88,14 @@ class FakeDB:
         self.db.setDatabaseName(db)
         if not self.db.open():
             raise DBFail("Cann`t connect to db")
-        self.query = QSqlQuery()
 
     def __del__(self):
         if self.db is not None:
             self.db.close()
 
     def create_tables(self, user):
-        return self.query.exec_("""
+        query = QSqlQuery(self.db)
+        return query.exec_("""
             CREATE TABLE {table} (
             {d}	INTEGER NOT NULL UNIQUE,
             {hv}	INTEGER NOT NULL,
@@ -110,7 +110,8 @@ class FakeDB:
         )
 
     def _test_data(self, user):
-        return self.query.exec_("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+        query = QSqlQuery(self.db)
+        return query.exec_("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
                 VALUES(datetime('now'), '10 м', '11 м', '12 м', '45 м', '10 к', '12 к', '134 к');""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
@@ -127,6 +128,7 @@ class PokazaniyaDB(FakeDB):
                          ".config", "profjilcom", "prof.db"))
 
     def save2db(self, user, args):
+        query = QSqlQuery(self.db)
         #arg: list of dict
         for kwargs in args:
 
@@ -136,21 +138,21 @@ class PokazaniyaDB(FakeDB):
                 d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
                 gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
 
-            self.query.prepare("""
+            query.prepare("""
                 REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
                 VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
                 d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
                 gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
             )
-            self.query.bindValue(":%s" % Date, kwargs[Date])
-            self.query.bindValue(":%s" % HVS_vanna, kwargs[HVS_vanna])
-            self.query.bindValue(":%s" % HVS_kuhnya, kwargs[HVS_kuhnya])
-            self.query.bindValue(":%s" % GVS_vanna, kwargs[GVS_vanna])
-            self.query.bindValue(":%s" % GVS_kuhnya, kwargs[GVS_kuhnya])
-            self.query.bindValue(":%s" % T1, kwargs[T1])
-            self.query.bindValue(":%s" % T2, kwargs[T2])
-            self.query.bindValue(":%s" % Teplo, kwargs[Teplo])
-            self.query.exec_()
+            query.bindValue(":%s" % Date, kwargs[Date])
+            query.bindValue(":%s" % HVS_vanna, kwargs[HVS_vanna])
+            query.bindValue(":%s" % HVS_kuhnya, kwargs[HVS_kuhnya])
+            query.bindValue(":%s" % GVS_vanna, kwargs[GVS_vanna])
+            query.bindValue(":%s" % GVS_kuhnya, kwargs[GVS_kuhnya])
+            query.bindValue(":%s" % T1, kwargs[T1])
+            query.bindValue(":%s" % T2, kwargs[T2])
+            query.bindValue(":%s" % Teplo, kwargs[Teplo])
+            print('save one record', query.exec_())
 
 
 class Conf:
@@ -211,6 +213,7 @@ class Profjilcom(Conf):
         super(Profjilcom, self).__init__()
 
         self.response = None
+        self.status_code = None
         self.form_id = None
         self.form_value = None
         self.captcha_sid = None
@@ -219,15 +222,18 @@ class Profjilcom(Conf):
         self.authorized = False
 
     def connect(self, url=URL):
-        resp = requests.get(url, headers=headers, cookies=self.cookies)
-        resp.close()
-        if resp.status_code == 403:
-            raise NotAthorized("Not authorized access")
-        if resp.status_code // 500 == 1:
-            raise ServerError("Server size error")
-        if not resp.ok:
-            raise ConnectionError("Coud not connect to %s. Code: %s" % (url, resp.status_code))
-        self.response = resp.content.decode()
+        r = requests.get(url, headers=headers, cookies=self.cookies)
+        r.close()
+        #if resp.status_code == 403:
+        #    raise NotAthorized("Not authorized access")
+        #if resp.status_code // 500 == 1:
+        #    raise ServerError("Server size error")
+        #if not resp.ok:
+        #    raise ConnectionError("Coud not connect to %s. Code: %s" % (url, resp.status_code))
+        self.response = r.text
+        self.status_code = r.status_code
+        self.cookies.update(r.cookies)
+        return r.ok
 
     def get_auth_form_values(self):
         sf_id = search(form_id, self.response)
@@ -253,9 +259,6 @@ class Profjilcom(Conf):
         return True
     
     def get_capcha_img(self):
-        if not self.authorized:
-            self.connect(URL)
-
         s = search(captcha_img, self.response)
         if not s:
             raise SiteStructFail("No capcha img url find")
@@ -268,7 +271,7 @@ class Profjilcom(Conf):
 
     
     def logout(self):
-        requests.get(urljoin(URL, "/logout"), headers=headers, cookies=self.cookies)
+        self.connect(urljoin(URL, "/logout"))
         self.authorized = False
 
     def auth(self, user, pswd, capcha):
@@ -276,7 +279,8 @@ class Profjilcom(Conf):
         self.form_value == None or
         self.captcha_sid == None or
         self.captcha_token == None):
-            raise Exception("No form data")
+            raise SiteStructFail("No form data")
+
         form = {
                     "name": user,
                     "pass": pswd,
@@ -289,23 +293,32 @@ class Profjilcom(Conf):
                 }
         r = requests.post(auth_url, form,
                           cookies=self.cookies, headers=headers, allow_redirects=False)
+
         r.close()
+        ret = r.ok
+        print(self.cookies)
+        print(r.cookies)
+
         self.cookies.update(r.cookies)
 
         if r.status_code == 302:
             r = requests.get(pokaz_url,
                              cookies=self.cookies, headers=headers)
             r.close()
+            ret = r.ok
 
             if r.status_code == 403:
-                print('403')
                 raise NotAthorized("Not authorized access")
 
         self.authorized = True
         self.username = user
-        self.password = pswd
         self.cookies.update(r.cookies)  # update session cookies
         self.save()
+
+        self.response = r.text
+        self.status_code = r.status_code
+
+        return ret
 
     
     def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya, gvs_kuhnya, gvs_vannaya, t1, t2, teplo):

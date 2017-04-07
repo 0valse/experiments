@@ -32,7 +32,7 @@ class MainFom(QtWidgets.QWidget):
         self.AuthDialog = AuthDialog()
 
     def set_authorize(self, authorized):
-        if not authorized:
+        if authorized:
             self.authorized = True
             self.UserLabel.setText(self.profs.username)
             self.statusLabel.setText("Авторизован")
@@ -72,24 +72,58 @@ class MainFom(QtWidgets.QWidget):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
 
         #check needs auth
-        self.set_authorize(self._connect(auth_url))
+        self.set_authorize(self.auth())
 
-    def _connect(self, url, drop_auth=False):
+    def auth(self):
+        return self._connect(auth_url)
+
+    def auth_form(self):
         ret = False
-        try:
-            self.profs.connect(url)
-        except NotAthorized:
-            self.set_authorize(False)
-            if drop_auth:
-                self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
-            #self.auth()
-        except ConfFail:
+
+        self.AuthDialog.capchaEdit.clear()
+        self.profs.get_auth_form_values()
+        self._set_capcha_img()
+
+        self.AuthDialog.show()
+
+        if self.AuthDialog.exec_() == QtWidgets.QDialog.Accepted:
+            user = self.AuthDialog.userEdit.text()
+            pswd = self.AuthDialog.passwordEdit.text()
+            capcha = self.AuthDialog.capchaEdit.text()
+
+            try:
+                ret = self.profs.auth(user, pswd, capcha)
+            except NotAthorized:
+                self.show_error("Ошибка авторизации", "Не верный логин или пароль!")
+            except SiteStructFail:
+                self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
+            else:
+                self.UserLabel.setText(user)
+                self.set_authorize(True)
+
+                self.profs.username = user
+                self.sendButton.setEnabled(True)
+                self.profs.save()
+
+        return ret
+
+    def _connect(self, url):
+        ret = self.profs.connect(url)
+        if not ret:
+            if self.profs.status_code == 403:
+                print('403')
+                self.set_authorize(False)
+                self.auth_form()
+                return
+
+            if self.profs.status_code // 500 == 1:
+                self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
+                return
+
             self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
-        except ServerError:
-            self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
-        except SiteStructFail:
-            self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
-        ret = True
+
+        #except SiteStructFail:
+        #    self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
         return ret
 
     def get_pokazaniya(self):
@@ -129,7 +163,7 @@ class MainFom(QtWidgets.QWidget):
             self.profs.logout()
             self.set_authorize(False)
         else:
-            self.auth()
+            self._connect(auth_url)
 
     def send(self):
         hvs_kuhnya = self.hvs_hvs_kuhnya.text()
@@ -145,7 +179,7 @@ class MainFom(QtWidgets.QWidget):
                 self.profs.send_pokazaniya(hvs_kuhnya, hvs_vannaya, gvs_vannaya, gvs_kuhnya, t1, t2, teplo)
             except NotAthorized:
                 self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
-                self.auth()
+                self._connect(auth_url)
             except:
                 self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
         else:
@@ -153,34 +187,6 @@ class MainFom(QtWidgets.QWidget):
     
     def goout(self):
         self.close()
-
-    def auth(self):
-        self._connect(auth_url, drop_auth=True)
-        self.profs.get_auth_form_values()
-
-        self.AuthDialog.capchaEdit.clear()
-        self.AuthDialog.show()
-        
-        if self.AuthDialog.exec_() == QtWidgets.QDialog.Accepted:
-            user = self.AuthDialog.userEdit.text()
-            pswd = self.AuthDialog.passwordEdit.text()
-            capcha = self.AuthDialog.capchaEdit.text()
-        else:
-            return
-
-        try:
-            self.profs.auth(user, pswd, capcha)
-        except NotAthorized:
-            self.show_error("Ошибка авторизации", "Не верный логин или пароль!")
-        else:
-            self.UserLabel.setText(user)
-            self.set_authorize(True)
-
-            self.profs.username = user
-            if self.AuthDialog.savepass_checkBox.isChecked():
-                self.profs.password = pswd
-            self.sendButton.setEnabled(True)
-            self.profs.save()
 
     def show_warning(self, title, msg):
         return self._show_MSG(QtWidgets.QMessageBox.warning, title, msg)
