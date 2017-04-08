@@ -15,7 +15,7 @@ from configparser import ConfigParser
 from urllib.parse import urljoin
 
 
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery
+from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlDriver
 
 from lxml import etree
 
@@ -42,8 +42,6 @@ gvs_gvs_vannaya = 'submitted[gvs][gvs_vannaya]'
 prochie_pokazaniya_elektroenergiya = 'submitted[prochie_pokazaniya][elektroenergiya]'
 prochie_pokazaniya_t2_noch = 'submitted[prochie_pokazaniya][t2_noch]'
 potreblenie_tepla_schetchik_1 = 'submitted[potreblenie_tepla][schetchik_1]'
-
-
 
 
 Date = "Date"
@@ -90,36 +88,49 @@ class FakeDB:
             raise DBFail("Cann`t connect to db")
 
     def __del__(self):
-        if self.db is not None:
+        if self.db.isOpen():
             self.db.close()
 
-    def create_tables(self, user):
+    def create_table(self, user):
         query = QSqlQuery(self.db)
         ret = query.exec_("""
-            CREATE TABLE {table} (
-            {d}	TEXT NOT NULL UNIQUE,
-            {hv}	TEXT NOT NULL,
-            {hk}	TEXT NOT NULL,
-            {gv}	TEXT NOT NULL,
-            {gk}	TEXT NOT NULL,
-            {t1}	TEXT NOT NULL,
-            {t2}	TEXT NOT NULL,
-            {T}	TEXT NOT NULL);""".format(
+            CREATE TABLE IF NOT EXISTS {table} (
+            {d} TEXT NOT NULL UNIQUE,
+            {hv} TEXT NOT NULL,
+            {hk} TEXT NOT NULL,
+            {gv} TEXT NOT NULL,
+            {gk} TEXT NOT NULL,
+            {t1} TEXT NOT NULL,
+            {t2} TEXT NOT NULL,
+            {T} TEXT NOT NULL);""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
         )
-        self.db.commit()
-        print(query.lastError().text())
+        if not ret:
+            print(query.lastError().text())
         return ret
 
-    def _test_data(self, user):
+    def _test_data(self, user,
+                   values={'HVS_vanna': '0 м3', 'HVS_kuhnya': '8 м3', 'GVS_vanna': '0 м3', 'GVS_kuhnya': '5 м3',
+                   'T1': '349 кВт', 'T2': '13 кВт', 'Teplo': '41,569кВт.', 'Date': '2016-01-25'}):
         query = QSqlQuery(self.db)
-        ret = query.exec_("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                VALUES(date('now'), '10 м', '11 м', '12 м', '45 м', '10 к', '12 к', '134 к');""".format(
+        query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+                        VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
-        print(query.lastError().text())
-        self.db.commit()
+            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
+        )
+        query.bindValue(':%s' % Date, values[Date])
+        query.bindValue(':%s' % HVS_vanna, values[HVS_vanna])
+        query.bindValue(':%s' % HVS_kuhnya, values[HVS_kuhnya])
+        query.bindValue(':%s' % GVS_vanna, values[GVS_vanna])
+        query.bindValue(':%s' % GVS_kuhnya, values[GVS_kuhnya])
+        query.bindValue(':%s' % T1, values[T1])
+        query.bindValue(':%s' % T2, values[T2])
+        query.bindValue(':%s' % Teplo, values[Teplo])
+        ret = query.exec_()
+        if not ret:
+            print(query.lastError().text())
         return ret
 
 
@@ -127,39 +138,32 @@ class PokazaniyaDB(FakeDB):
     def __init__(self, test_init=False):
         if test_init:
             self.connect()
-            print('Test create', self.create_tables('anon'))
+            print('Test create', self.create_table('anon'))
             print('Insert test data', self._test_data('anon'))
         else:
             self.connect(os.path.join(os.path.expanduser("~"),
                          ".config", "profjilcom", "prof.db"))
 
     def save2db(self, user, args):
-        query = QSqlQuery(self.db)
         #arg: list of dict
+        self.db.transaction()
+        query = QSqlQuery(self.db)
         for kwargs in args:
-
-            print("""
-                REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+            query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+                                    VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
                 d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-                gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user))
-
-            query.prepare("""
-                REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
-                d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-                gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
+                gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+                table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
             )
-            print(Date, kwargs[Date], HVS_vanna, kwargs[HVS_vanna])
-            query.bindValue(":%s" % Date, kwargs[Date])
-            query.bindValue(":%s" % HVS_vanna, kwargs[HVS_vanna])
-            query.bindValue(":%s" % HVS_kuhnya, kwargs[HVS_kuhnya])
-            query.bindValue(":%s" % GVS_vanna, kwargs[GVS_vanna])
-            query.bindValue(":%s" % GVS_kuhnya, kwargs[GVS_kuhnya])
-            query.bindValue(":%s" % T1, kwargs[T1])
-            query.bindValue(":%s" % T2, kwargs[T2])
-            query.bindValue(":%s" % Teplo, kwargs[Teplo])
-            print('save one record', query.exec_())
+
+            query.bindValue(':%s' % Date, kwargs[Date])
+            query.bindValue(':%s' % HVS_vanna, kwargs[HVS_vanna])
+            query.bindValue(':%s' % HVS_kuhnya, kwargs[HVS_kuhnya])
+            query.bindValue(':%s' % GVS_vanna, kwargs[GVS_vanna])
+            query.bindValue(':%s' % GVS_kuhnya, kwargs[GVS_kuhnya])
+            query.bindValue(':%s' % T1, kwargs[T1])
+            query.bindValue(':%s' % T2, kwargs[T2])
+            query.bindValue(':%s' % Teplo, kwargs[Teplo])
         print('commit', self.db.commit())
 
 
@@ -241,6 +245,7 @@ class Profjilcom(Conf):
         self.response = r.text
         self.status_code = r.status_code
         self.cookies.update(r.cookies)
+
         return r.ok
 
     def get_auth_form_values(self):
@@ -304,8 +309,6 @@ class Profjilcom(Conf):
 
         r.close()
         ret = r.ok
-        print(self.cookies)
-        print(r.cookies)
 
         self.cookies.update(r.cookies)
 
@@ -348,14 +351,17 @@ class Profjilcom(Conf):
         if not r.ok:
             raise ConnectionError("Coud not connect to %s. Errcode: %s" % (pokaz_url, r.status_code))
         PokazaniyaDB().save2db(self.username,
-                               list(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya, GVS_vanna=gvs_vannaya,
-                                         GVS_kuhnya=gvs_kuhnya, T1=t1, T2=t2, Teplo=teplo,
-                                         Date=datetime.now().timestamp())
+                               list(dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
+                                         GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
+                                         T1=str(t1), T2=str(t2), Teplo=str(teplo),
+                                         Date=str(datetime.now().date().isoformat()))
                                     )
                                )
         return r.status_code, r
 
     def get_all_pokazaniya(self):
+        # TODO: delet tested data
+        return [{'HVS_vanna': '38 м3', 'HVS_kuhnya': '82 м3', 'GVS_vanna': '48 м3', 'GVS_kuhnya': '26 м3', 'T1': '2,616 кВт', 'T2': '718 кВт', 'Teplo': '11,718кВт.', 'Date': '2017-03-26'}, {'HVS_vanna': '35 м3', 'HVS_kuhnya': '78 м3', 'GVS_vanna': '45 м3', 'GVS_kuhnya': '25 м3', 'T1': '2,483 кВт', 'T2': '678 кВт', 'Teplo': '11,174кВт.', 'Date': '2017-02-21'}, {'HVS_vanna': '30 м3', 'HVS_kuhnya': '68 м3', 'GVS_vanna': '39 м3', 'GVS_kuhnya': '22 м3', 'T1': '2,016 кВт', 'T2': '578 кВт', 'Teplo': '9,057кВт.', 'Date': '2016-12-26'}, {'HVS_vanna': '25 м3', 'HVS_kuhnya': '64 м3', 'GVS_vanna': '36 м3', 'GVS_kuhnya': '21 м3', 'T1': '1,835 кВт', 'T2': '536 кВт', 'Teplo': '7,999кВт.', 'Date': '2016-11-23'}, {'HVS_vanna': '22 м3', 'HVS_kuhnya': '58 м3', 'GVS_vanna': '32 м3', 'GVS_kuhnya': '20 м3', 'T1': '1,603 кВт', 'T2': '473 кВт', 'Teplo': '7,146кВт.', 'Date': '2016-10-25'}, {'HVS_vanna': '19 м3', 'HVS_kuhnya': '53 м3', 'GVS_vanna': '28 м3', 'GVS_kuhnya': '18 м3', 'T1': '1,402 кВт', 'T2': '409 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-09-25'}, {'HVS_vanna': '16 м3', 'HVS_kuhnya': '46 м3', 'GVS_vanna': '24 м3', 'GVS_kuhnya': '16 м3', 'T1': '1,268 кВт', 'T2': '335 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-08-23'}, {'HVS_vanna': '12 м3', 'HVS_kuhnya': '39 м3', 'GVS_vanna': '21 м3', 'GVS_kuhnya': '15 м3', 'T1': '1,155 кВт', 'T2': '267 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-07-24'}, {'HVS_vanna': '9 м3', 'HVS_kuhnya': '33 м3', 'GVS_vanna': '21 м3', 'GVS_kuhnya': '15 м3', 'T1': '1,045 кВт', 'T2': '219 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-06-23'}, {'HVS_vanna': '7 м3', 'HVS_kuhnya': '28 м3', 'GVS_vanna': '17 м3', 'GVS_kuhnya': '13 м3', 'T1': '943 кВт', 'T2': '171 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-05-24'}, {'HVS_vanna': '5 м3', 'HVS_kuhnya': '24 м3', 'GVS_vanna': '13 м3', 'GVS_kuhnya': '11 м3', 'T1': '854 кВт', 'T2': '137 кВт', 'Teplo': '6,450кВт.', 'Date': '2016-04-23'}, {'HVS_vanna': '2 м3', 'HVS_kuhnya': '18 м3', 'GVS_vanna': '7 м3', 'GVS_kuhnya': '8 м3', 'T1': '696 кВт', 'T2': '83 кВт', 'Teplo': '5,889кВт.', 'Date': '2016-03-23'}, {'HVS_vanna': '1 м3', 'HVS_kuhnya': '13 м3', 'GVS_vanna': '2 м3', 'GVS_kuhnya': '6 м3', 'T1': '526 кВт', 'T2': '28 кВт', 'Teplo': '5,062кВт.', 'Date': '2016-02-20'}, {'HVS_vanna': '0 м3', 'HVS_kuhnya': '8 м3', 'GVS_vanna': '0 м3', 'GVS_kuhnya': '5 м3', 'T1': '349 кВт', 'T2': '13 кВт', 'Teplo': '41,569кВт.', 'Date': '2016-01-25'}]
         # get main page
         r = requests.get(archive_url,
                          cookies=self.cookies, headers=headers)
@@ -387,14 +393,13 @@ class Profjilcom(Conf):
             t2 = p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]
             teplo = p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]
 
-            tmp.append(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya, GVS_vanna=gvs_vannaya,
-                 GVS_kuhnya=gvs_kuhnya, T1=t1, T2=t2, Teplo=teplo,
-                 Date=datetime.strptime(date.replace(" ", ""),
-                                        '%m/%d/%Y-%H:%M').date().isoformat())
+            tmp.append(dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
+                            GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
+                            T1=str(t1), T2=str(t2), Teplo=str(teplo),
+                            Date=str(datetime.strptime(date.replace(" ", ""),
+                                        '%m/%d/%Y-%H:%M').date().isoformat()))
                        )
             line += 1
-
-        print(tmp)
 
         return tmp
 

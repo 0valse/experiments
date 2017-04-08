@@ -28,6 +28,9 @@ class MainFom(QtWidgets.QWidget):
         self.sendButton.clicked.connect(self.send)
 
         self.profs = Profjilcom()
+        self.pokaz = PokazaniyaDB()
+        self.pokaz.create_table(self.profs.username)
+        self.pokaz.connect(self.profs.username)
 
         self.AuthDialog = AuthDialog()
 
@@ -56,9 +59,8 @@ class MainFom(QtWidgets.QWidget):
         if self.profs.username is not None:
             self.AuthDialog.userEdit.setText(self.profs.username)
             self.AuthDialog.passwordEdit.setFocus()
-        #if self.profs.password is not None:
-        #    self.AuthDialog.passwordEdit.setText(self.profs.password)
-        #    self.AuthDialog.capchaEdit.setFocus()
+        else:
+            self.AuthDialog.userEdit.setFocus()
 
         self.hvs_hvs_kuhnya.setValidator(QtGui.QIntValidator())
         self.hvs_hvs_vannaya.setValidator(QtGui.QIntValidator())
@@ -99,7 +101,7 @@ class MainFom(QtWidgets.QWidget):
                 self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
             else:
                 self.UserLabel.setText(user)
-                self.set_authorize(True)
+                #self.set_authorize(True)
 
                 self.profs.username = user
                 self.sendButton.setEnabled(True)
@@ -113,12 +115,11 @@ class MainFom(QtWidgets.QWidget):
             if self.profs.status_code == 403:
                 print('403')
                 self.set_authorize(False)
-                self.auth_form()
-                return
+                return self.auth_form()
 
             if self.profs.status_code // 500 == 1:
                 self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
-                return
+                return False
 
             self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
 
@@ -127,9 +128,11 @@ class MainFom(QtWidgets.QWidget):
         return ret
 
     def get_pokazaniya(self):
-        print('Create table', PokazaniyaDB().create_tables(self.profs.username))
+        if self.authorized:
+            #TODO: send to db pokazania in other connection
+            self.profs.sync2db(self.profs.get_all_pokazaniya())
 
-        self.model = QSqlTableModel(self)
+        self.model = QSqlTableModel(self, db=self.pokaz.db)
         self.model.setTable(self.profs.username)
         self.model.setEditStrategy(QSqlTableModel.OnManualSubmit)
         self.model.select()
@@ -147,10 +150,6 @@ class MainFom(QtWidgets.QWidget):
         # for i in range(self.model.rowCount()):
         #    self.tableView.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        print('is auth', self.authorized)
-
-        if self.authorized:
-            self.profs.sync2db(self.profs.get_all_pokazaniya())
 
     def _set_capcha_img(self):
         self.profs.get_capcha_img()
