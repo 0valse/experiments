@@ -4,6 +4,7 @@ import platform
 from datetime import datetime
 import pickle
 import base64
+import platform
 
 OS = platform.system() # Darwin, Linux, Windows
 
@@ -73,9 +74,46 @@ class ConfFail(Exception):
 class ServerError(ConnectionError):
     pass
 
+def num2month(num):
+    months = {
+        '1': "январь",
+        '2': "февраль",
+        '3': "март",
+        '4': "апрель",
+        '5': "май",
+        '6': "июнь",
+        '7': "июль",
+        '8': "август",
+        '9': "сентябрь",
+        '10': "октябрь",
+        '11': "ноябрь",
+        '12': "декабрь"}
+    return months.get(num)
 
+def previos_month():
+    cd = datetime.now().date().month
+    if cd == 1:
+        return str(12)
+    else:
+        return str(cd - 1)
 
-#windows config in С:\ Users \ [user name] \ AppData \ Local \ [ (Project Name) or (AssemblyCompany) ] \ [name project_cashBuild] \ [AssemblyVersion] \ user.config
+def cur_month():
+    return str(datetime.now().date().month)
+
+def cur_year():
+    return str(datetime.now().date().year)
+
+def isodate_month(date):
+    return str(datetime.strptime(date, '%Y-%m-%d').month)
+
+def get_conf_dir():
+    system = platform.system().lower()
+    path = os.path.join(os.path.expanduser("~"), ".config", "profjilcom")
+    if system == "windows":
+        #windows config in С:\ Users \ [user name] \ AppData \ Local \ [ (Project Name) or (AssemblyCompany) ] \ [name project_cashBuild] \ [AssemblyVersion] \ user.config
+        path = os.path.join(os.path.expanduser("~"), "AppData", "Local", "profjilcom")
+    return path
+
 
 
 class FakeDB:
@@ -141,30 +179,79 @@ class PokazaniyaDB(FakeDB):
             print('Test create', self.create_table('anon'))
             print('Insert test data', self._test_data('anon'))
         else:
-            self.connect(os.path.join(os.path.expanduser("~"),
-                         ".config", "profjilcom", "prof.db"))
+            self.connect(os.path.join(get_conf_dir(), "prof.db"))
 
-    def save2db(self, user, args):
-        #arg: list of dict
-        self.db.transaction()
+    def save2db(self, user, kwargs):
         query = QSqlQuery(self.db)
-        for kwargs in args:
-            query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                                    VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
-                d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-                gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
-                table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
-            )
+        query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
+                                            VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
+        )
 
-            query.bindValue(':%s' % Date, kwargs[Date])
-            query.bindValue(':%s' % HVS_vanna, kwargs[HVS_vanna])
-            query.bindValue(':%s' % HVS_kuhnya, kwargs[HVS_kuhnya])
-            query.bindValue(':%s' % GVS_vanna, kwargs[GVS_vanna])
-            query.bindValue(':%s' % GVS_kuhnya, kwargs[GVS_kuhnya])
-            query.bindValue(':%s' % T1, kwargs[T1])
-            query.bindValue(':%s' % T2, kwargs[T2])
-            query.bindValue(':%s' % Teplo, kwargs[Teplo])
+        query.bindValue(':%s' % Date, kwargs[Date])
+        query.bindValue(':%s' % HVS_vanna, kwargs[HVS_vanna])
+        query.bindValue(':%s' % HVS_kuhnya, kwargs[HVS_kuhnya])
+        query.bindValue(':%s' % GVS_vanna, kwargs[GVS_vanna])
+        query.bindValue(':%s' % GVS_kuhnya, kwargs[GVS_kuhnya])
+        query.bindValue(':%s' % T1, kwargs[T1])
+        query.bindValue(':%s' % T2, kwargs[T2])
+        query.bindValue(':%s' % Teplo, kwargs[Teplo])
+        return query.exec_()
+
+    def save_all2db(self, user, args):
+        self.db.transaction()
+        for kwargs in args:
+            self.save2db(user, kwargs)
         print('commit', self.db.commit())
+
+    def get_month_pokaz(self, user, month):
+        query = QSqlQuery(self.db)
+        s_str = '{}-{:02d}-%'.format(cur_year(), int(month))
+        ret = query.exec_('''SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T}
+                FROM {table} WHERE {d} LIKE '{s_str}';
+                '''.format(d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+                           gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, s_str=s_str,
+                           table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
+                      )
+        if not ret:
+            print(query.lastError().text())
+            return dict()
+        query.first()
+
+        return dict(
+            Date=query.value(Date), HVS_vanna=query.value(HVS_vanna),
+            HVS_kuhnya=query.value(HVS_kuhnya), GVS_vanna=query.value(GVS_vanna),
+            GVS_kuhnya=query.value(GVS_kuhnya), T1=query.value(T1),
+            T2=query.value(T2), Teplo=query.value(Teplo)
+        )
+
+    def get_last_pokaz(self, user):
+        query = QSqlQuery(self.db)
+
+        print("SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T} from {table};".format(
+            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName)))
+
+        ret = query.exec_("SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T} from {table};".format(
+            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
+        )
+        if not ret:
+            print(query.lastError().text())
+            return dict()
+        query.first()
+
+        return dict(
+            Date=query.value(Date), HVS_vanna=query.value(HVS_vanna),
+            HVS_kuhnya=query.value(HVS_kuhnya), GVS_vanna=query.value(GVS_vanna),
+            GVS_kuhnya=query.value(GVS_kuhnya), T1=query.value(T1),
+            T2=query.value(T2), Teplo=query.value(Teplo)
+        )
+
 
 
 class Conf:
@@ -175,8 +262,7 @@ class Conf:
     last_update = datetime.now().date().isoformat()
 
     def __init__(self):
-        self.conf_file = os.path.join(os.path.expanduser("~"),
-                                      ".config", "profjilcom", "prof.ini")
+        self.conf_file = os.path.join(get_conf_dir(), "prof.ini")
         if not os.path.exists(os.path.dirname(self.conf_file)):
             os.makedirs(os.path.dirname(self.conf_file))
         if not os.path.exists(self.conf_file):
@@ -253,7 +339,7 @@ class Profjilcom(Conf):
         if not sf_id:
             raise SiteStructFail("No sf_id find")
         self.form_id = sf_id.group(1)
-        
+
         sf_id_val = search(form_id_value, self.response)
         if not sf_id_val:
             raise SiteStructFail("No sf_id_val find")
@@ -351,10 +437,10 @@ class Profjilcom(Conf):
         if not r.ok:
             raise ConnectionError("Coud not connect to %s. Errcode: %s" % (pokaz_url, r.status_code))
         PokazaniyaDB().save2db(self.username,
-                               list(dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
+                               dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
                                          GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
                                          T1=str(t1), T2=str(t2), Teplo=str(teplo),
-                                         Date=str(datetime.now().date().isoformat()))
+                                         Date=str(datetime.now().date().isoformat())
                                     )
                                )
         return r.status_code, r
@@ -405,5 +491,5 @@ class Profjilcom(Conf):
 
     def sync2db(self, pokaz):
         self.last_update = datetime.now().date().isoformat()
-        PokazaniyaDB().save2db(self.username, pokaz)
+        PokazaniyaDB().save_all2db(self.username, pokaz)
         self.save()

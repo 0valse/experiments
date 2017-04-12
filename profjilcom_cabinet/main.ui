@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
+  <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_10">
      <item>
@@ -158,7 +158,7 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_14">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QTableView" name="tableView">
            <property name="editTriggers">
@@ -204,27 +204,42 @@
       <attribute name="title">
        <string>Tab 2</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="1" column="0">
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>2</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="1" column="2" colspan="2">
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_15">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout">
+          <widget class="QLabel" name="SendLabel">
+           <property name="text">
+            <string>Введите показания счётчиков для отправки за</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_mounth">
+           <property name="text">
+            <string>TextLabel</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
              <item>
@@ -254,29 +269,6 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_18">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_hvs_kuhnya">
-               <property name="text">
-                <string>TextLabel</string>
                </property>
               </widget>
              </item>
@@ -314,29 +306,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <spacer name="horizontalSpacer_19">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_hvs_vannaya">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>
@@ -368,29 +337,6 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_20">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_gvs_kuhnya">
-               <property name="text">
-                <string>TextLabel</string>
                </property>
               </widget>
              </item>
@@ -428,29 +374,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <spacer name="horizontalSpacer_21">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_gvs_vannaya">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>
@@ -485,29 +408,6 @@
                </property>
               </widget>
              </item>
-             <item>
-              <spacer name="horizontalSpacer_22">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_t1">
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
            <item>
@@ -539,29 +439,6 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_23">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeType">
-                <enum>QSizePolicy::Fixed</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>5</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_t2">
-               <property name="text">
-                <string>TextLabel</string>
                </property>
               </widget>
              </item>
@@ -611,6 +488,333 @@
                </property>
               </widget>
              </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <item>
+              <widget class="QLabel" name="label_10">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_18">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>35</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_hvs_kuhnya_plus">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;+3&lt;/span&gt; м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; к показаниям за март (345 м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; в прошлом месяце)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <item>
+              <widget class="QLabel" name="label_11">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_19">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>35</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_hvs_vannaya_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;345 м&lt;/span&gt;&lt;span style=&quot; font-weight:400; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;span style=&quot; font-weight:400;&quot;&gt; в прошлом месяце&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_25">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_17">
+             <item>
+              <widget class="QLabel" name="label_12">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_20">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>35</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_gvs_kuhnya_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_26">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_18">
+             <item>
+              <widget class="QLabel" name="label_13">
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_21">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>35</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_gvs_vannaya_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_27">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_19">
+             <item>
+              <widget class="QLabel" name="label_14">
+               <property name="text">
+                <string>КВт/ч</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_22">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>13</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_t1_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_28">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_20">
+             <item>
+              <widget class="QLabel" name="label_15">
+               <property name="text">
+                <string>КВт/ч</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_23">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>13</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_t2_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>TextLabel</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_29">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_21">
+             <item>
+              <widget class="QLabel" name="label_16">
+               <property name="text">
+                <string>КВт/ч</string>
+               </property>
+              </widget>
+             </item>
              <item>
               <spacer name="horizontalSpacer_24">
                <property name="orientation">
@@ -621,18 +825,37 @@
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
-                 <width>5</width>
+                 <width>13</width>
                  <height>20</height>
                 </size>
                </property>
               </spacer>
              </item>
              <item>
-              <widget class="QLabel" name="label_teplo">
+              <widget class="QLabel" name="label_teplo_plus">
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
               </widget>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_30">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </item>
@@ -645,7 +868,7 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>182</width>
+             <width>517</width>
              <height>20</height>
             </size>
            </property>
@@ -653,7 +876,7 @@
          </item>
         </layout>
        </item>
-       <item row="2" column="3">
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -666,7 +889,7 @@
          </property>
         </spacer>
        </item>
-       <item row="3" column="2">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_12">
          <item>
           <widget class="QPushButton" name="sendButton">
@@ -692,13 +915,6 @@
           </spacer>
          </item>
         </layout>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLabel" name="SendLabel">
-         <property name="text">
-          <string>Введите показания счётчиков для отправки</string>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>

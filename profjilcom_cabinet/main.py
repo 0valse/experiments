@@ -8,8 +8,9 @@ from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtSql import QSqlTableModel
 
-from prof import Profjilcom, PokazaniyaDB, URL, auth_url
-from prof import NotAthorized, ConfFail, ServerError, SiteStructFail
+from prof import (Profjilcom, PokazaniyaDB, auth_url,
+                  previos_month, num2month, cur_month, cur_year,
+                  NotAthorized, ConfFail, ServerError, SiteStructFail)
 
 
 class AuthDialog(QtWidgets.QDialog):
@@ -26,6 +27,8 @@ class MainFom(QtWidgets.QWidget):
 
         self.closeButton.clicked.connect(self.goout)
         self.sendButton.clicked.connect(self.send)
+        #self.label_hvs_kuhnya_plus.editingFinished.connect(self.on_label_hvs_kuhnya_plus_editingFinished)
+        self.hvs_hvs_kuhnya.editingFinished.connect(self.on_label_hvs_kuhnya_plus_editingFinished)
 
         self.profs = Profjilcom()
         self.pokaz = PokazaniyaDB()
@@ -33,6 +36,9 @@ class MainFom(QtWidgets.QWidget):
         self.pokaz.connect(self.profs.username)
 
         self.AuthDialog = AuthDialog()
+
+        self.porazanie_previos_month = dict()
+        self.porazanie_cur_month = dict()
 
     def set_authorize(self, authorized):
         if authorized:
@@ -72,6 +78,14 @@ class MainFom(QtWidgets.QWidget):
 
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab), "История показаний")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
+
+        self.label_hvs_kuhnya_plus.hide()
+        self.label_hvs_vannaya_plus.hide()
+        self.label_gvs_kuhnya_plus.hide()
+        self.label_gvs_vannaya_plus.hide()
+        self.label_t1_plus.hide()
+        self.label_t2_plus.hide()
+        self.label_teplo_plus.hide()
 
         #check needs auth
         self.set_authorize(self.auth())
@@ -127,6 +141,35 @@ class MainFom(QtWidgets.QWidget):
         #    self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
         return ret
 
+    #@pyqtSlot()
+    def on_label_hvs_kuhnya_plus_editingFinished(self):
+        print('hhh')
+
+    def _pokaz_db2str(self, cur_pokazanie, prev_pokazanie):
+        if not prev_pokazanie.split()[0].isdigit():
+            return False
+        else:
+            ped = prev_pokazanie.split()[1].strip()
+            prev_pokazanie = int(prev_pokazanie.split()[0])
+        if not cur_pokazanie.split()[0].isdigit():
+            return False
+        else:
+            cur_pokazanie = int(cur_pokazanie.split()[0])
+        diff = cur_pokazanie - prev_pokazanie
+        if ped == 'м3':
+            ed = ' м<span style=" vertical-align:super;">3</span>'
+        else:
+            ed = ' КВт/ч'
+        old_str = '{old}{ed} в прошлом месяце'.format(old=prev_pokazanie, ed=ed)
+
+        if diff < 0:
+            html = '<html><head/><body><p>{old_str}</p></body></html>'.format(old_str=old_str)
+        else:
+            html = '<html><head/><body><p><span style=" font-weight:600;">+{diff}</span>{ed} к показаниям за март ({old_str})</p></body></html>'.format(
+                diff=diff, ed=ed, old_str=old_str
+            )
+        return html
+
     def get_pokazaniya(self):
         if self.authorized:
             #TODO: send to db pokazania in other connection
@@ -150,6 +193,12 @@ class MainFom(QtWidgets.QWidget):
         # for i in range(self.model.rowCount()):
         #    self.tableView.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableView.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        self.porazanie_previos_month = self.pokaz.get_month_pokaz(self.profs.username, previos_month())
+        print(self.porazanie_previos_month)
+        self.porazanie_cur_month = self.pokaz.get_last_pokaz(self.profs.username)
+        print(self.porazanie_cur_month)
 
     def _set_capcha_img(self):
         self.profs.get_capcha_img()
@@ -184,7 +233,7 @@ class MainFom(QtWidgets.QWidget):
                 self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
         else:
             self.show_error("Пустые поля", "Все поля должны быть заполнены!")
-    
+
     def goout(self):
         self.close()
 
