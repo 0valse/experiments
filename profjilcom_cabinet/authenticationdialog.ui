@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>352</width>
+    <width>425</width>
     <height>247</height>
    </rect>
   </property>
@@ -60,7 +60,7 @@
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Enter Username and a Password to access this site</string>
+      <string>Введите аутенфтикационные данные для доступа на сайт</string>
      </property>
      <property name="wordWrap">
       <bool>false</bool>
@@ -76,7 +76,7 @@
          <item>
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string>Username:</string>
+            <string>Имя пользователя:</string>
            </property>
           </widget>
          </item>
@@ -122,7 +122,7 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string>Password:</string>
+            <string>Пароль:</string>
            </property>
           </widget>
          </item>
@@ -165,7 +165,7 @@
          <item>
           <widget class="QLabel" name="label_5">
            <property name="text">
-            <string>Capcha: </string>
+            <string>Проверочные симовлы: </string>
            </property>
           </widget>
          </item>
