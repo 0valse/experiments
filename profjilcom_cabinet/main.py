@@ -2,7 +2,7 @@
 
 # pie charts http://matplotlib.org/examples/pie_and_polar_charts/pie_demo_features.html
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRegExp, QTimer
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSlot
@@ -11,6 +11,8 @@ from PyQt5.QtSql import QSqlTableModel
 from prof import (Profjilcom, PokazaniyaDB, auth_url,
                   previos_month, num2month, cur_month, cur_year,
                   NotAthorized, ConfFail, ServerError, SiteStructFail)
+
+
 
 
 class AuthDialog(QtWidgets.QDialog):
@@ -29,6 +31,7 @@ class MainFom(QtWidgets.QWidget):
         self.sendButton.clicked.connect(self.send)
         #self.label_hvs_kuhnya_plus.editingFinished.connect(self.on_label_hvs_kuhnya_plus_editingFinished)
         self.hvs_hvs_kuhnya.editingFinished.connect(self.on_label_hvs_kuhnya_plus_editingFinished)
+        self.gvs_gvs_kuhnya.textEdited.connect(self.gvs_kuhnya_timer)
 
         self.profs = Profjilcom()
         self.pokaz = PokazaniyaDB()
@@ -68,13 +71,14 @@ class MainFom(QtWidgets.QWidget):
         else:
             self.AuthDialog.userEdit.setFocus()
 
-        self.hvs_hvs_kuhnya.setValidator(QtGui.QIntValidator())
-        self.hvs_hvs_vannaya.setValidator(QtGui.QIntValidator())
-        self.gvs_gvs_kuhnya.setValidator(QtGui.QIntValidator())
-        self.gvs_gvs_vannaya.setValidator(QtGui.QIntValidator())
-        self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QIntValidator())
-        self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QIntValidator())
-        self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QIntValidator())
+        rx = QRegExp('\d+[,.]{0,1}\d{0,2}')
+        self.hvs_hvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
+        self.hvs_hvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
+        self.gvs_gvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
+        self.gvs_gvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
+        self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QRegExpValidator(rx))
+        self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QRegExpValidator(rx))
+        self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QRegExpValidator(rx))
 
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab), "История показаний")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab), "Отправить показания")
@@ -89,6 +93,9 @@ class MainFom(QtWidgets.QWidget):
 
         #check needs auth
         self.set_authorize(self.auth())
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.on_label_gvs_kuhnya_plus_editingFinished)
 
     def auth(self):
         return self._connect(auth_url)
@@ -141,9 +148,16 @@ class MainFom(QtWidgets.QWidget):
         #    self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
         return ret
 
-    #@pyqtSlot()
     def on_label_hvs_kuhnya_plus_editingFinished(self):
-        print('hhh')
+        print('HVS_kuhnya_plus_editingFinished')
+
+    def gvs_kuhnya_timer(self):
+        if not self.timer.isActive():
+            self.timer.start(1000)
+    def on_label_gvs_kuhnya_plus_editingFinished(self):
+        print('GVS_kuhnya_plus_editingFinished')
+        self.timer.stop()
+
 
     def _pokaz_db2str(self, cur_pokazanie, prev_pokazanie):
         if not prev_pokazanie.split()[0].isdigit():
@@ -174,6 +188,11 @@ class MainFom(QtWidgets.QWidget):
         if self.authorized:
             #TODO: send to db pokazania in other connection
             self.profs.sync2db(self.profs.get_all_pokazaniya())
+            #try:
+            #    self.profs.sync2db(self.profs.get_all_pokazaniya())
+            #except:
+            #    self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
+            #    return
 
         self.model = QSqlTableModel(self, db=self.pokaz.db)
         self.model.setTable(self.profs.username)
@@ -215,13 +234,13 @@ class MainFom(QtWidgets.QWidget):
             self._connect(auth_url)
 
     def send(self):
-        hvs_kuhnya = self.hvs_hvs_kuhnya.text()
-        hvs_vannaya = self.hvs_hvs_vannaya.text()
-        gvs_kuhnya = self.gvs_gvs_kuhnya.text()
-        gvs_vannaya = self.gvs_gvs_vannaya.text()
-        t1 = self.prochie_pokazaniya_elektroenergiya.text()
-        t2 = self.prochie_pokazaniya_t2_noch.text()
-        teplo = self.potreblenie_tepla_schetchik_1.text()
+        hvs_kuhnya = float(self.hvs_hvs_kuhnya.text().replace(',', '.'))
+        hvs_vannaya = float(self.hvs_hvs_vannaya.text().replace(',', '.'))
+        gvs_kuhnya = float(self.gvs_gvs_kuhnya.text().replace(',', '.'))
+        gvs_vannaya = float(self.gvs_gvs_vannaya.text().replace(',', '.'))
+        t1 = float(self.prochie_pokazaniya_elektroenergiya.text().replace(',', '.'))
+        t2 = float(self.prochie_pokazaniya_t2_noch.text().replace(',', '.'))
+        teplo = float(self.potreblenie_tepla_schetchik_1.text().replace(',', '.'))
 
         if (hvs_kuhnya and hvs_vannaya and gvs_vannaya and gvs_kuhnya and t1 and t2 and teplo):
             try:

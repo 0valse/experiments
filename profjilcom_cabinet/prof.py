@@ -1,5 +1,5 @@
 import os
-from re import search
+from re import compile, match
 import platform
 from datetime import datetime
 import pickle
@@ -131,26 +131,38 @@ class FakeDB:
 
     def create_table(self, user):
         query = QSqlQuery(self.db)
+        # создать базу, если её нет
         ret = query.exec_("""
             CREATE TABLE IF NOT EXISTS {table} (
-            {d} TEXT NOT NULL UNIQUE,
-            {hv} TEXT NOT NULL,
-            {hk} TEXT NOT NULL,
-            {gv} TEXT NOT NULL,
-            {gk} TEXT NOT NULL,
-            {t1} TEXT NOT NULL,
-            {t2} TEXT NOT NULL,
-            {T} TEXT NOT NULL);""".format(
+            {d} TEXT NOT NULL,
+            {hv} REAL NOT NULL,
+            {hk} REAL NOT NULL,
+            {gv} REAL NOT NULL,
+            {gk} REAL NOT NULL,
+            {t1} REAL NOT NULL,
+            {t2} REAL NOT NULL,
+            {T} REAL NOT NULL);""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
         )
         if not ret:
             print(query.lastError().text())
+
+        # обеспечим уникальность всей совокупности данных за счёт индекса
+        ret = query.exec_("""CREATE UNIQUE INDEX idx_pokazaniya ON {table}
+                        ({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T});""".format(
+            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
+                        )
+        if not ret:
+            print(query.lastError().text())
+
         return ret
 
     def _test_data(self, user,
-                   values={'HVS_vanna': '0 м3', 'HVS_kuhnya': '8 м3', 'GVS_vanna': '0 м3', 'GVS_kuhnya': '5 м3',
-                   'T1': '349 кВт', 'T2': '13 кВт', 'Teplo': '41,569кВт.', 'Date': '2016-01-25'}):
+                   values={'HVS_vanna': '0', 'HVS_kuhnya': '8', 'GVS_vanna': '0',
+                           'GVS_kuhnya': '5', 'T1': '349', 'T2': '13',
+                           'Teplo': '41569', 'Date': '2016-01-25'}):
         query = QSqlQuery(self.db)
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
                         VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
@@ -184,20 +196,20 @@ class PokazaniyaDB(FakeDB):
     def save2db(self, user, kwargs):
         query = QSqlQuery(self.db)
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                                            VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+                        VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
             table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
         )
 
         query.bindValue(':%s' % Date, kwargs[Date])
-        query.bindValue(':%s' % HVS_vanna, kwargs[HVS_vanna])
-        query.bindValue(':%s' % HVS_kuhnya, kwargs[HVS_kuhnya])
-        query.bindValue(':%s' % GVS_vanna, kwargs[GVS_vanna])
-        query.bindValue(':%s' % GVS_kuhnya, kwargs[GVS_kuhnya])
-        query.bindValue(':%s' % T1, kwargs[T1])
-        query.bindValue(':%s' % T2, kwargs[T2])
-        query.bindValue(':%s' % Teplo, kwargs[Teplo])
+        query.bindValue(':%s' % HVS_vanna, float(kwargs[HVS_vanna]))
+        query.bindValue(':%s' % HVS_kuhnya, float(kwargs[HVS_kuhnya]))
+        query.bindValue(':%s' % GVS_vanna, float(kwargs[GVS_vanna]))
+        query.bindValue(':%s' % GVS_kuhnya, float(kwargs[GVS_kuhnya]))
+        query.bindValue(':%s' % T1, float(kwargs[T1]))
+        query.bindValue(':%s' % T2, float(kwargs[T2]))
+        query.bindValue(':%s' % Teplo, float(kwargs[Teplo]))
         return query.exec_()
 
     def save_all2db(self, user, args):
@@ -335,22 +347,22 @@ class Profjilcom(Conf):
         return r.ok
 
     def get_auth_form_values(self):
-        sf_id = search(form_id, self.response)
+        sf_id = match(form_id, self.response)
         if not sf_id:
             raise SiteStructFail("No sf_id find")
         self.form_id = sf_id.group(1)
 
-        sf_id_val = search(form_id_value, self.response)
+        sf_id_val = match(form_id_value, self.response)
         if not sf_id_val:
             raise SiteStructFail("No sf_id_val find")
         self.form_value = sf_id_val.group(1)
         
-        ca_sid =  search(captcha_sid, self.response)
+        ca_sid =  match(captcha_sid, self.response)
         if not ca_sid:
             raise SiteStructFail("No ca_sid find")
         self.captcha_sid = ca_sid.group(1)
         
-        ca_tok = search(captcha_token, self.response)
+        ca_tok = match(captcha_token, self.response)
         if not ca_tok:
             raise SiteStructFail("No ca_tok find")
         self.captcha_token = ca_tok.group(1)
@@ -358,7 +370,7 @@ class Profjilcom(Conf):
         return True
     
     def get_capcha_img(self):
-        s = search(captcha_img, self.response)
+        s = match(captcha_img, self.response)
         if not s:
             raise SiteStructFail("No capcha img url find")
         capcha_url = urljoin(URL, s.group(1))
@@ -447,7 +459,7 @@ class Profjilcom(Conf):
 
     def get_all_pokazaniya(self):
         # TODO: delet tested data
-        return [{'HVS_vanna': '38 м3', 'HVS_kuhnya': '82 м3', 'GVS_vanna': '48 м3', 'GVS_kuhnya': '26 м3', 'T1': '2,616 кВт', 'T2': '718 кВт', 'Teplo': '11,718кВт.', 'Date': '2017-03-26'}, {'HVS_vanna': '35 м3', 'HVS_kuhnya': '78 м3', 'GVS_vanna': '45 м3', 'GVS_kuhnya': '25 м3', 'T1': '2,483 кВт', 'T2': '678 кВт', 'Teplo': '11,174кВт.', 'Date': '2017-02-21'}, {'HVS_vanna': '30 м3', 'HVS_kuhnya': '68 м3', 'GVS_vanna': '39 м3', 'GVS_kuhnya': '22 м3', 'T1': '2,016 кВт', 'T2': '578 кВт', 'Teplo': '9,057кВт.', 'Date': '2016-12-26'}, {'HVS_vanna': '25 м3', 'HVS_kuhnya': '64 м3', 'GVS_vanna': '36 м3', 'GVS_kuhnya': '21 м3', 'T1': '1,835 кВт', 'T2': '536 кВт', 'Teplo': '7,999кВт.', 'Date': '2016-11-23'}, {'HVS_vanna': '22 м3', 'HVS_kuhnya': '58 м3', 'GVS_vanna': '32 м3', 'GVS_kuhnya': '20 м3', 'T1': '1,603 кВт', 'T2': '473 кВт', 'Teplo': '7,146кВт.', 'Date': '2016-10-25'}, {'HVS_vanna': '19 м3', 'HVS_kuhnya': '53 м3', 'GVS_vanna': '28 м3', 'GVS_kuhnya': '18 м3', 'T1': '1,402 кВт', 'T2': '409 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-09-25'}, {'HVS_vanna': '16 м3', 'HVS_kuhnya': '46 м3', 'GVS_vanna': '24 м3', 'GVS_kuhnya': '16 м3', 'T1': '1,268 кВт', 'T2': '335 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-08-23'}, {'HVS_vanna': '12 м3', 'HVS_kuhnya': '39 м3', 'GVS_vanna': '21 м3', 'GVS_kuhnya': '15 м3', 'T1': '1,155 кВт', 'T2': '267 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-07-24'}, {'HVS_vanna': '9 м3', 'HVS_kuhnya': '33 м3', 'GVS_vanna': '21 м3', 'GVS_kuhnya': '15 м3', 'T1': '1,045 кВт', 'T2': '219 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-06-23'}, {'HVS_vanna': '7 м3', 'HVS_kuhnya': '28 м3', 'GVS_vanna': '17 м3', 'GVS_kuhnya': '13 м3', 'T1': '943 кВт', 'T2': '171 кВт', 'Teplo': '6,477кВт.', 'Date': '2016-05-24'}, {'HVS_vanna': '5 м3', 'HVS_kuhnya': '24 м3', 'GVS_vanna': '13 м3', 'GVS_kuhnya': '11 м3', 'T1': '854 кВт', 'T2': '137 кВт', 'Teplo': '6,450кВт.', 'Date': '2016-04-23'}, {'HVS_vanna': '2 м3', 'HVS_kuhnya': '18 м3', 'GVS_vanna': '7 м3', 'GVS_kuhnya': '8 м3', 'T1': '696 кВт', 'T2': '83 кВт', 'Teplo': '5,889кВт.', 'Date': '2016-03-23'}, {'HVS_vanna': '1 м3', 'HVS_kuhnya': '13 м3', 'GVS_vanna': '2 м3', 'GVS_kuhnya': '6 м3', 'T1': '526 кВт', 'T2': '28 кВт', 'Teplo': '5,062кВт.', 'Date': '2016-02-20'}, {'HVS_vanna': '0 м3', 'HVS_kuhnya': '8 м3', 'GVS_vanna': '0 м3', 'GVS_kuhnya': '5 м3', 'T1': '349 кВт', 'T2': '13 кВт', 'Teplo': '41,569кВт.', 'Date': '2016-01-25'}]
+        return [{'HVS_vanna': 38.0, 'HVS_kuhnya': 82.0, 'GVS_vanna': 48.0, 'GVS_kuhnya': 26.0, 'T1': 2616.0, 'T2': 718.0, 'Teplo': 11718.0, 'Date': '2017-03-26'}, {'HVS_vanna': 35.0, 'HVS_kuhnya': 78.0, 'GVS_vanna': 45.0, 'GVS_kuhnya': 25.0, 'T1': 2483.0, 'T2': 678.0, 'Teplo': 11174.0, 'Date': '2017-02-21'}, {'HVS_vanna': 30.0, 'HVS_kuhnya': 68.0, 'GVS_vanna': 39.0, 'GVS_kuhnya': 22.0, 'T1': 2016.0, 'T2': 578.0, 'Teplo': 9057.0, 'Date': '2016-12-26'}, {'HVS_vanna': 25.0, 'HVS_kuhnya': 64.0, 'GVS_vanna': 36.0, 'GVS_kuhnya': 21.0, 'T1': 1835.0, 'T2': 536.0, 'Teplo': 7999.0, 'Date': '2016-11-23'}, {'HVS_vanna': 22.0, 'HVS_kuhnya': 58.0, 'GVS_vanna': 32.0, 'GVS_kuhnya': 20.0, 'T1': 1603.0, 'T2': 473.0, 'Teplo': 7146.0, 'Date': '2016-10-25'}, {'HVS_vanna': 19.0, 'HVS_kuhnya': 53.0, 'GVS_vanna': 28.0, 'GVS_kuhnya': 18.0, 'T1': 1402.0, 'T2': 409.0, 'Teplo': 6477.0, 'Date': '2016-09-25'}, {'HVS_vanna': 16.0, 'HVS_kuhnya': 46.0, 'GVS_vanna': 24.0, 'GVS_kuhnya': 16.0, 'T1': 1268.0, 'T2': 335.0, 'Teplo': 6477.0, 'Date': '2016-08-23'}, {'HVS_vanna': 12.0, 'HVS_kuhnya': 39.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1155.0, 'T2': 267.0, 'Teplo': 6477.0, 'Date': '2016-07-24'}, {'HVS_vanna': 9.0, 'HVS_kuhnya': 33.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1045.0, 'T2': 219.0, 'Teplo': 6477.0, 'Date': '2016-06-23'}, {'HVS_vanna': 7.0, 'HVS_kuhnya': 28.0, 'GVS_vanna': 17.0, 'GVS_kuhnya': 13.0, 'T1': 943.0, 'T2': 171.0, 'Teplo': 6477.0, 'Date': '2016-05-24'}, {'HVS_vanna': 5.0, 'HVS_kuhnya': 24.0, 'GVS_vanna': 13.0, 'GVS_kuhnya': 11.0, 'T1': 854.0, 'T2': 137.0, 'Teplo': 6450.0, 'Date': '2016-04-23'}, {'HVS_vanna': 2.0, 'HVS_kuhnya': 18.0, 'GVS_vanna': 7.0, 'GVS_kuhnya': 8.0, 'T1': 696.0, 'T2': 83.0, 'Teplo': 5889.0, 'Date': '2016-03-23'}, {'HVS_vanna': 1.0, 'HVS_kuhnya': 13.0, 'GVS_vanna': 2.0, 'GVS_kuhnya': 6.0, 'T1': 526.0, 'T2': 28.0, 'Teplo': 5062.0, 'Date': '2016-02-20'}, {'HVS_vanna': 0.0, 'HVS_kuhnya': 8.0, 'GVS_vanna': 0.0, 'GVS_kuhnya': 5.0, 'T1': 349.0, 'T2': 13.0, 'Teplo': 41569.0, 'Date': '2016-01-25'}]
         # get main page
         r = requests.get(archive_url,
                          cookies=self.cookies, headers=headers)
@@ -455,6 +467,8 @@ class Profjilcom(Conf):
         tree = etree.HTML(r.text)
         line = 1
         tmp = list()
+        # ищем только цифры (с десятичной запятой или точкой)
+        m = compile(r'\d+[,.]{0,1}\d*')
         while True:
             xdate = tree.xpath('//*[@id="squeeze"]/div/div/div[2]/table[1]/tbody/tr[%d]/td[2]' % line)
             xlink = tree.xpath('//*[@id="squeeze"]/div/div/div[2]/table[1]/tbody/tr[%d]/td[3]/a' % line)
@@ -471,21 +485,41 @@ class Profjilcom(Conf):
 
             #parse
             p = etree.HTML(r.text)
-            hvs_kuhnya = p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0]
-            hvs_vannaya = p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]
-            gvs_kuhnya = p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0]
-            gvs_vannaya = p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0]
-            t1 = p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0]
-            t2 = p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]
-            teplo = p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]
+            # очень костыльно и криво сделано
+            # нужно: что есть такой xpath; проверять, что найдены цифры
 
-            tmp.append(dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
-                            GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
-                            T1=str(t1), T2=str(t2), Teplo=str(teplo),
+            # не знаю почему, но на сайте в показаниях отделяются тысячи с помощью ","
+            print(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0])
+            hvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0], m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]))
+            hvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0])
+            gvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0])
+            gvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0])
+            t1 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0])
+            t2 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            print(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0])
+            teplo = float(m.match(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+
+            tmp.append(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya,
+                            GVS_vanna=gvs_vannaya, GVS_kuhnya=gvs_kuhnya,
+                            T1=t1, T2=t2, Teplo=teplo,
                             Date=str(datetime.strptime(date.replace(" ", ""),
                                         '%m/%d/%Y-%H:%M').date().isoformat()))
                        )
             line += 1
+        
+
+        print(tmp)
 
         return tmp
 
