@@ -1,5 +1,5 @@
 import os
-from re import compile, match
+from re import compile, match, search
 import platform
 from datetime import datetime
 import pickle
@@ -347,22 +347,23 @@ class Profjilcom(Conf):
         return r.ok
 
     def get_auth_form_values(self):
-        sf_id = match(form_id, self.response)
+        print(self.response)
+        sf_id = search(form_id, self.response)
         if not sf_id:
             raise SiteStructFail("No sf_id find")
         self.form_id = sf_id.group(1)
 
-        sf_id_val = match(form_id_value, self.response)
+        sf_id_val = search(form_id_value, self.response)
         if not sf_id_val:
             raise SiteStructFail("No sf_id_val find")
         self.form_value = sf_id_val.group(1)
         
-        ca_sid =  match(captcha_sid, self.response)
+        ca_sid =  search(captcha_sid, self.response)
         if not ca_sid:
             raise SiteStructFail("No ca_sid find")
         self.captcha_sid = ca_sid.group(1)
         
-        ca_tok = match(captcha_token, self.response)
+        ca_tok = search(captcha_token, self.response)
         if not ca_tok:
             raise SiteStructFail("No ca_tok find")
         self.captcha_token = ca_tok.group(1)
@@ -370,7 +371,7 @@ class Profjilcom(Conf):
         return True
     
     def get_capcha_img(self):
-        s = match(captcha_img, self.response)
+        s = search(captcha_img, self.response)
         if not s:
             raise SiteStructFail("No capcha img url find")
         capcha_url = urljoin(URL, s.group(1))

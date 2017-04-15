@@ -200,13 +200,13 @@ class MainFom(QtWidgets.QWidget):
         self.model.select()
 
         self.model.setHeaderData(0, Qt.Horizontal, "Дата")
-        self.model.setHeaderData(1, Qt.Horizontal, "ХВС Кухня")
-        self.model.setHeaderData(2, Qt.Horizontal, "ХВС Ванная")
-        self.model.setHeaderData(3, Qt.Horizontal, "ГВС Кухня")
-        self.model.setHeaderData(4, Qt.Horizontal, "ГВС Ванная")
-        self.model.setHeaderData(5, Qt.Horizontal, "Электричество\nДень")
-        self.model.setHeaderData(6, Qt.Horizontal, "Электричество\nНочь")
-        self.model.setHeaderData(7, Qt.Horizontal, "Отопление")
+        self.model.setHeaderData(1, Qt.Horizontal, 'ХВС Кухня, м3')
+        self.model.setHeaderData(2, Qt.Horizontal, 'ХВС Ванная, м3')
+        self.model.setHeaderData(3, Qt.Horizontal, 'ГВС Кухня, м3')
+        self.model.setHeaderData(4, Qt.Horizontal, 'ГВС Ванная, м3')
+        self.model.setHeaderData(5, Qt.Horizontal, "Электричество\nДень, КВт/ч")
+        self.model.setHeaderData(6, Qt.Horizontal, "Электричество\nНочь, КВт/ч")
+        self.model.setHeaderData(7, Qt.Horizontal, "Отопление, КВт/ч")
         self.tableView.setModel(self.model)
 
         # for i in range(self.model.rowCount()):
