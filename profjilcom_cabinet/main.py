@@ -11,7 +11,7 @@ from PyQt5.QtSql import QSqlTableModel
 from prof import (Profjilcom, PokazaniyaDB, auth_url,
                   previos_month, num2month, cur_month, cur_year,
                   NotAthorized, ConfFail, ServerError, SiteStructFail)
-
+from prof import GVS_kuhnya
 
 
 
@@ -95,7 +95,7 @@ class MainFom(QtWidgets.QWidget):
         self.set_authorize(self.auth())
 
         self.timer = QTimer()
-        self.timer.timeout.connect(self.on_label_gvs_kuhnya_plus_editingFinished)
+        self.timer.timeout.connect(self.gvs_kuhnya_plus_editingFinished)
 
     def auth(self):
         return self._connect(auth_url)
@@ -152,37 +152,49 @@ class MainFom(QtWidgets.QWidget):
         print('HVS_kuhnya_plus_editingFinished')
 
     def gvs_kuhnya_timer(self):
-        if not self.timer.isActive():
-            self.timer.start(1000)
-    def on_label_gvs_kuhnya_plus_editingFinished(self):
-        print('GVS_kuhnya_plus_editingFinished')
         self.timer.stop()
-
-
-    def _pokaz_db2str(self, cur_pokazanie, prev_pokazanie):
-        if not prev_pokazanie.split()[0].isdigit():
-            return False
-        else:
-            ped = prev_pokazanie.split()[1].strip()
-            prev_pokazanie = int(prev_pokazanie.split()[0])
-        if not cur_pokazanie.split()[0].isdigit():
-            return False
-        else:
-            cur_pokazanie = int(cur_pokazanie.split()[0])
+        self.timer.start(1000)
+    def gvs_kuhnya_plus_editingFinished(self):
+        print('GVS_kuhnya_plus_editingFinished')
+        
+        self.timer.stop()
+        try:
+            cur_pokazanie = float(self.gvs_gvs_kuhnya.text())
+        except ValueError:
+            cur_pokazanie = 0
+        prev_pokazanie = float(self.porazanie_previos_month.get(GVS_kuhnya))
+        
         diff = cur_pokazanie - prev_pokazanie
-        if ped == 'м3':
-            ed = ' м<span style=" vertical-align:super;">3</span>'
-        else:
-            ed = ' КВт/ч'
-        old_str = '{old}{ed} в прошлом месяце'.format(old=prev_pokazanie, ed=ed)
-
+        ed = 'м<span style=" vertical-align:super;">3</span>'
+        old_str = '{old} {ed} в прошлом месяце'.format(old=prev_pokazanie, ed=ed)
         if diff < 0:
-            html = '<html><head/><body><p>{old_str}</p></body></html>'.format(old_str=old_str)
+            html = '''<html>
+            <head/>
+            <body>
+                <p>
+                    {old_str}
+                </p>
+            </body>
+            </html>'''.format(old_str=old_str)
         else:
-            html = '<html><head/><body><p><span style=" font-weight:600;">+{diff}</span>{ed} к показаниям за март ({old_str})</p></body></html>'.format(
-                diff=diff, ed=ed, old_str=old_str
+            html = '''<html>
+            <body>
+                <p>
+                    <span style="font-weight:600;">
+                    +{diff}
+                    </span>
+                     {ed} к показаниям за март ({old_str})
+                </p>
+            </body>
+            </html>'''.format(
+                diff=diff,
+                ed=ed,
+                old_str=old_str
             )
-        return html
+        print(html)
+        self.label_gvs_kuhnya_plus.setText(html)
+        self.label_gvs_kuhnya_plus.setVisible(True)
+        
 
     def get_pokazaniya(self):
         if self.authorized:

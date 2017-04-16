@@ -210,6 +210,14 @@ class PokazaniyaDB(FakeDB):
         query.bindValue(':%s' % T1, float(kwargs[T1]))
         query.bindValue(':%s' % T2, float(kwargs[T2]))
         query.bindValue(':%s' % Teplo, float(kwargs[Teplo]))
+
+        #после записи нет сразу доступа к записанным данным
+        """
+        QSqlDatabasePrivate::removeDatabase: connection 'qt_sql_default_connection' is still in use, all queries will cease to work.
+        QSqlDatabasePrivate::addDatabase: duplicate connection name 'qt_sql_default_connection', old connection removed.
+        commit True
+        no such table: ovsinc Невозможно выполнить выражение
+        """
         return query.exec_()
 
     def save_all2db(self, user, args):
@@ -291,7 +299,12 @@ class Conf:
 
         d = dict(self.config.items(self.account))
         self.username = d.get('username', None)
-        self.last_update = d.get("last_update", datetime.now().date().isoformat())
+        lst_upd = d.get("last_update", None)
+        if lst_upd is None:
+            self.last_update = datetime.now().date()
+        else:
+            self.last_update = datetime.strptime(lst_upd, '%Y-%m-%d').date()
+
         self.cookies.update(self._loads(d.get('cookies', self._dumps(dict()))))
 
     def _dumps(self, raw):
@@ -347,7 +360,6 @@ class Profjilcom(Conf):
         return r.ok
 
     def get_auth_form_values(self):
-        print(self.response)
         sf_id = search(form_id, self.response)
         if not sf_id:
             raise SiteStructFail("No sf_id find")
@@ -489,26 +501,13 @@ class Profjilcom(Conf):
             # очень костыльно и криво сделано
             # нужно: что есть такой xpath; проверять, что найдены цифры
 
-            # не знаю почему, но на сайте в показаниях отделяются тысячи с помощью ","
-            print(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0])
+            # на сайте в показаниях отделяются тысячи с помощью ","
             hvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0], m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]))
             hvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0])
             gvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0])
             gvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0])
             t1 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0])
             t2 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-
-            print(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0])
             teplo = float(m.match(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
 
             tmp.append(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya,
