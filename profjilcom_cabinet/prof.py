@@ -195,6 +195,7 @@ class PokazaniyaDB(FakeDB):
 
     def save2db(self, user, kwargs):
         query = QSqlQuery(self.db)
+        #дублирование записей
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
                         VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
@@ -325,7 +326,8 @@ class Conf:
 
     def save(self):
         self.config.set(self.account, 'username', self.username)
-        self.config.set(self.account, 'last_update', self.last_update)
+        self.config.set(self.account, 'last_update',
+            self.last_update.isoformat())
         self.config.set(self.account, 'cookies', self._dumps(self.COOKS))
         with open(self.conf_file, 'w') as f:
             self.config.write(f)
@@ -524,6 +526,6 @@ class Profjilcom(Conf):
         return tmp
 
     def sync2db(self, pokaz):
-        self.last_update = datetime.now().date().isoformat()
+        self.last_update = datetime.now().date()
         PokazaniyaDB().save_all2db(self.username, pokaz)
         self.save()
