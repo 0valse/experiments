@@ -568,12 +568,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_hvs_vannaya_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;345 м&lt;/span&gt;&lt;span style=&quot; font-weight:400; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;span style=&quot; font-weight:400;&quot;&gt; в прошлом месяце&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -621,12 +615,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_gvs_kuhnya_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
@@ -674,12 +662,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_gvs_vannaya_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
@@ -727,12 +709,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_t1_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
@@ -780,12 +756,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_t2_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
@@ -833,12 +803,6 @@
              </item>
              <item>
               <widget class="QLabel" name="label_teplo_plus">
-               <property name="font">
-                <font>
-                 <weight>75</weight>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>TextLabel</string>
                </property>
