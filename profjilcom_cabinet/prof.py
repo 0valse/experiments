@@ -149,7 +149,7 @@ class FakeDB:
             print(query.lastError().text())
 
         # обеспечим уникальность всей совокупности данных за счёт индекса
-        ret = query.exec_("""CREATE UNIQUE INDEX idx_pokazaniya ON {table}
+        ret = query.exec_("""CREATE UNIQUE INDEX IF NOT EXISTS idx_pokazaniya ON {table}
                         ({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
@@ -219,7 +219,10 @@ class PokazaniyaDB(FakeDB):
         commit True
         no such table: ovsinc Невозможно выполнить выражение
         """
-        return query.exec_()
+        ret = query.exec_()
+        if not ret:
+            print(query.lastError().text())
+        return ret
 
     def save_all2db(self, user, args):
         self.db.transaction()
@@ -445,7 +448,8 @@ class Profjilcom(Conf):
         return ret
 
     
-    def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya, gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
+    def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya,
+                        gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
         form = {
             hvs_hvs_kuhnya: hvs_kuhnya, 
             hvs_hvs_vannaya: hvs_vannaya,
@@ -463,14 +467,14 @@ class Profjilcom(Conf):
             raise NotAthorized("Not authorized access")
         if not r.ok:
             raise ConnectionError("Coud not connect to %s. Errcode: %s" % (pokaz_url, r.status_code))
-        PokazaniyaDB().save2db(self.username,
+        ret = PokazaniyaDB().save2db(self.username,
                                dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
                                          GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
                                          T1=str(t1), T2=str(t2), Teplo=str(teplo),
                                          Date=str(datetime.now().date().isoformat())
                                     )
                                )
-        return r.status_code, r
+        return ret
 
     def get_all_pokazaniya(self):
         # TODO: delet tested data
