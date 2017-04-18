@@ -228,7 +228,7 @@ class PokazaniyaDB(FakeDB):
         self.db.transaction()
         for kwargs in args:
             self.save2db(user, kwargs)
-        print('commit', self.db.commit())
+        print('commit all', self.db.commit())
 
     def get_month_pokaz(self, user, month):
         query = QSqlQuery(self.db)
@@ -253,11 +253,6 @@ class PokazaniyaDB(FakeDB):
 
     def get_last_pokaz(self, user):
         query = QSqlQuery(self.db)
-
-        print("SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T} from {table};".format(
-            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
-            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName)))
 
         ret = query.exec_("SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T} from {table};".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
@@ -523,7 +518,6 @@ class Profjilcom(Conf):
                                         '%m/%d/%Y-%H:%M').date().isoformat()))
                        )
             line += 1
-        
 
         print(tmp)
 

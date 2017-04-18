@@ -356,9 +356,7 @@ class MainFom(QtWidgets.QWidget):
         self.tableView.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.porazanie_previos_month = self.pokaz.get_month_pokaz(self.profs.username, previos_month())
-        print(self.porazanie_previos_month)
         self.porazanie_cur_month = self.pokaz.get_last_pokaz(self.profs.username)
-        print(self.porazanie_cur_month)
 
         self._set_previos(self.label_hvs_kuhnya_plus, HVS_kuhnya)
         self._set_previos(self.label_hvs_vannaya_plus, HVS_vanna)
