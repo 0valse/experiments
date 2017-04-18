@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1236</width>
+    <width>1325</width>
     <height>519</height>
    </rect>
   </property>
@@ -150,14 +150,7 @@
        <string>Tab 1</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLabel" name="ListLable">
-         <property name="text">
-          <string>История показний счётчиков</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
+       <item row="1" column="1">
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QTableView" name="tableView">
@@ -174,7 +167,7 @@
          </item>
         </layout>
        </item>
-       <item row="2" column="0">
+       <item row="2" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
           <widget class="QPushButton" name="ReloadButton">
@@ -198,6 +191,45 @@
          </item>
         </layout>
        </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="ListLable">
+         <property name="text">
+          <string>История показний счётчиков</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <spacer name="horizontalSpacer_34">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>5</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="2">
+        <spacer name="horizontalSpacer_35">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Fixed</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>5</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="SendTab">
@@ -207,6 +239,22 @@
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_15">
+         <item>
+          <spacer name="horizontalSpacer_33">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
          <item>
           <widget class="QLabel" name="SendLabel">
            <property name="text">
@@ -238,6 +286,22 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_14">
+         <item>
+          <spacer name="horizontalSpacer_31">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
@@ -522,7 +586,7 @@
              <item>
               <widget class="QLabel" name="label_hvs_kuhnya_plus">
                <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;+3&lt;/span&gt; м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; к показаниям за март (345 м&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; в прошлом месяце)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -569,7 +633,7 @@
              <item>
               <widget class="QLabel" name="label_hvs_vannaya_plus">
                <property name="text">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:400;&quot;&gt;345 м&lt;/span&gt;&lt;span style=&quot; font-weight:400; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;span style=&quot; font-weight:400;&quot;&gt; в прошлом месяце&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -616,7 +680,7 @@
              <item>
               <widget class="QLabel" name="label_gvs_kuhnya_plus">
                <property name="text">
-                <string>TextLabel</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -663,7 +727,7 @@
              <item>
               <widget class="QLabel" name="label_gvs_vannaya_plus">
                <property name="text">
-                <string>TextLabel</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -710,7 +774,7 @@
              <item>
               <widget class="QLabel" name="label_t1_plus">
                <property name="text">
-                <string>TextLabel</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -757,7 +821,7 @@
              <item>
               <widget class="QLabel" name="label_t2_plus">
                <property name="text">
-                <string>TextLabel</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -804,7 +868,7 @@
              <item>
               <widget class="QLabel" name="label_teplo_plus">
                <property name="text">
-                <string>TextLabel</string>
+                <string/>
                </property>
               </widget>
              </item>
@@ -829,6 +893,9 @@
           <spacer name="horizontalSpacer_3">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Expanding</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -855,6 +922,22 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_12">
+         <item>
+          <spacer name="horizontalSpacer_32">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
          <item>
           <widget class="QPushButton" name="sendButton">
            <property name="enabled">
