@@ -40,21 +40,32 @@ class MainFom(QtWidgets.QWidget):
         self.closeButton.clicked.connect(self.goout)
         self.sendButton.clicked.connect(self.send)
 
-        self.gk_timer = QTimer()
-        self.gvs_gvs_kuhnya.textEdited.connect(self.gvs_kuhnya_timer)
-        self.gk_timer.timeout.connect(self.gvs_kuhnya_plus_editingFinished)
+        #общий таймер
+        self.timer = QTimer()
 
-        self.gv_timer = QTimer()
-        self.gvs_gvs_vannaya.textEdited.connect(self.gvs_vannaya_timer)
-        self.gv_timer.timeout.connect(self.gvs_vannaya_plus_editingFinished)
+        # сигналы отправляются на слоты всех labels
+        self.gvs_gvs_kuhnya.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.gvs_kuhnya_plus_editingFinished)
 
-        self.hk_timer = QTimer()
-        self.hvs_hvs_kuhnya.textEdited.connect(self.hvs_kuhnya_timer)
-        self.hk_timer.timeout.connect(self.hvs_kuhnya_plus_editingFinished)
+        self.gvs_gvs_vannaya.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.gvs_vannaya_plus_editingFinished)
 
-        self.hv_timer = QTimer()
-        self.hvs_hvs_vannaya.textEdited.connect(self.hvs_vannaya_timer)
-        self.hv_timer.timeout.connect(self.hvs_vannaya_plus_editingFinished)
+        self.hvs_hvs_kuhnya.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.hvs_kuhnya_plus_editingFinished)
+
+        self.hvs_hvs_vannaya.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.hvs_vannaya_plus_editingFinished)
+
+        self.prochie_pokazaniya_elektroenergiya.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.label_t1_plus_editingFinished)
+
+        self.prochie_pokazaniya_t2_noch.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.label_t2_plus_editingFinished)
+
+        self.potreblenie_tepla_schetchik_1.textEdited.connect(self.timer_timeout)
+        self.timer.timeout.connect(self.label_teplo_plus_editingFinished)
+
+        self.pokaz_list = list()
 
     def set_authorize(self, authorized):
         if authorized:
@@ -102,13 +113,13 @@ class MainFom(QtWidgets.QWidget):
             <p><span style=" font-weight:600;">%s</span>.</p><
             /body></html>""" % num2month(cur_month()))
 
-        self.label_hvs_kuhnya_plus.setVisible(False)
-        self.label_hvs_vannaya_plus.setVisible(False)
-        self.label_gvs_kuhnya_plus.setVisible(False)
-        self.label_gvs_vannaya_plus.setVisible(False)
-        self.label_t1_plus.setVisible(False)
-        self.label_t2_plus.setVisible(False)
-        self.label_teplo_plus.setVisible(False)
+        # self.label_hvs_kuhnya_plus.setVisible(False)
+        # self.label_hvs_vannaya_plus.setVisible(False)
+        # self.label_gvs_kuhnya_plus.setVisible(False)
+        # self.label_gvs_vannaya_plus.setVisible(False)
+        # self.label_t1_plus.setVisible(False)
+        # self.label_t2_plus.setVisible(False)
+        # self.label_teplo_plus.setVisible(False)
 
         #check needs auth
         self.set_authorize(self.auth())
@@ -195,66 +206,124 @@ class MainFom(QtWidgets.QWidget):
             )
         vidget.setText(html)
 
+    def _update_pokaz_list(self, item):
+        if item not in self.pokaz_list:
+            self.pokaz_list.append(item)
+        return len(self.pokaz_list)
 
-    def hvs_vannaya_timer(self):
-        self.hv_timer.stop()
-        self.hv_timer.start(1000)
+    def _del_pokaz_list_item(self, item):
+        if item in self.pokaz_list:
+            self.pokaz_list.remove(item)
+        return len(self.pokaz_list)
+
+    def check_sendButton_visible(self):
+        if self.authorized and len(self.pokaz_list) >= 7:
+            self.sendButton.setEnabled(True)
+        else:
+            self.sendButton.setEnabled(False)
+
+    def timer_timeout(self):
+        self.timer.stop()
+        self.timer.start(1000)
+
     def hvs_vannaya_plus_editingFinished(self):
-        self.hv_timer.stop()
+        self.timer.stop()
         try:
             cur_pokazanie = float(self.hvs_hvs_vannaya.text())
         except ValueError:
             cur_pokazanie = 0
+            self._del_pokaz_list_item(HVS_vanna)
+        else:
+            self._update_pokaz_list(HVS_vanna)
         prev_pokazanie = float(self.porazanie_previos_month.get(HVS_vanna))
 
         self._set_plus(self.label_hvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
-        # self.label_hvs_vannaya_plus.setVisible(True)
+        self.check_sendButton_visible()
 
-    def gvs_vannaya_timer(self):
-        self.gv_timer.stop()
-        self.gv_timer.start(1000)
     def gvs_vannaya_plus_editingFinished(self):
-        self.gv_timer.stop()
+        self.timer.stop()
         try:
             cur_pokazanie = float(self.gvs_gvs_vannaya.text())
         except ValueError:
             cur_pokazanie = 0
+            self._del_pokaz_list_item(GVS_vanna)
+        else:
+            self._update_pokaz_list(GVS_vanna)
         prev_pokazanie = float(self.porazanie_previos_month.get(GVS_vanna))
         
         self._set_plus(self.label_gvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
-        # self.label_gvs_vannaya_plus.setVisible(True)
+        self.check_sendButton_visible()
 
-    def hvs_kuhnya_timer(self):
-        self.hk_timer.stop()
-        self.hk_timer.start(1000)
     def hvs_kuhnya_plus_editingFinished(self):
-        print('HVS_kuhnya_plus_editingFinished')
-        self.hk_timer.stop()
+        self.timer.stop()
         try:
             cur_pokazanie = float(self.hvs_hvs_kuhnya.text())
         except ValueError:
             cur_pokazanie = 0
+            self._del_pokaz_list_item(HVS_kuhnya)
+        else:
+            self._update_pokaz_list(HVS_kuhnya)
         prev_pokazanie = float(self.porazanie_previos_month.get(HVS_kuhnya))
         
         self._set_plus(self.label_hvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
-        # self.label_hvs_kuhnya_plus.setVisible(True)
+        self.check_sendButton_visible()
 
-    def gvs_kuhnya_timer(self):
-        self.gk_timer.stop()
-        self.gk_timer.start(1000)
     def gvs_kuhnya_plus_editingFinished(self):
-        print('GVS_kuhnya_plus_editingFinished')
-        
-        self.gk_timer.stop()
+        self.timer.stop()
         try:
             cur_pokazanie = float(self.gvs_gvs_kuhnya.text())
         except ValueError:
             cur_pokazanie = 0
+            self._del_pokaz_list_item(GVS_kuhnya)
+        else:
+            self._update_pokaz_list(GVS_kuhnya)
         prev_pokazanie = float(self.porazanie_previos_month.get(GVS_kuhnya))
         
         self._set_plus(self.label_gvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
-        # self.label_gvs_kuhnya_plus.setVisible(True)
+        self.check_sendButton_visible()
+
+    def label_t1_plus_editingFinished(self):
+        self.timer.stop()
+        try:
+            cur_pokazanie = float(self.prochie_pokazaniya_elektroenergiya.text())
+        except ValueError:
+            cur_pokazanie = 0
+            self._del_pokaz_list_item(T1)
+        else:
+            self._update_pokaz_list(T1)
+        prev_pokazanie = float(self.porazanie_previos_month.get(T1))
+
+        self._set_plus(self.label_t1_plus, prev_pokazanie, cur_pokazanie)
+        self.check_sendButton_visible()
+
+    def label_t2_plus_editingFinished(self):
+        self.timer.stop()
+        try:
+            cur_pokazanie = float(self.prochie_pokazaniya_t2_noch.text())
+        except ValueError:
+            cur_pokazanie = 0
+            self._del_pokaz_list_item(T2)
+        else:
+            self._update_pokaz_list(T2)
+        prev_pokazanie = float(self.porazanie_previos_month.get(T1))
+
+        self._set_plus(self.label_t2_plus, prev_pokazanie, cur_pokazanie)
+        self.check_sendButton_visible()
+
+    def label_teplo_plus_editingFinished(self):
+        self.timer.stop()
+        try:
+            cur_pokazanie = float(self.potreblenie_tepla_schetchik_1.text())
+        except ValueError:
+            cur_pokazanie = 0
+            self._del_pokaz_list_item(Teplo)
+        else:
+            self._update_pokaz_list(Teplo)
+        prev_pokazanie = float(self.porazanie_previos_month.get(Teplo))
         
+        self._set_plus(self.label_teplo_plus, prev_pokazanie, cur_pokazanie)
+        self.check_sendButton_visible()
+
 
     def get_pokazaniya(self):
         if self.authorized:
