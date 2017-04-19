@@ -193,7 +193,14 @@ class PokazaniyaDB(FakeDB):
         else:
             self.connect(os.path.join(get_conf_dir(), "prof.db"))
 
-    def save2db(self, user, kwargs):
+    def _reindex(self):
+        query = QSqlQuery(self.db)
+        ret = query.exec_('REINDEX idx_pokazaniya;')
+        if not ret:
+            print('reindex', query.lastError().text())
+        return ret
+
+    def save2db(self, user, kwargs, reindex=True):
         query = QSqlQuery(self.db)
         #дублирование записей
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
@@ -212,32 +219,32 @@ class PokazaniyaDB(FakeDB):
         query.bindValue(':%s' % T2, float(kwargs[T2]))
         query.bindValue(':%s' % Teplo, float(kwargs[Teplo]))
 
-        #после записи нет сразу доступа к записанным данным
-        """
-        QSqlDatabasePrivate::removeDatabase: connection 'qt_sql_default_connection' is still in use, all queries will cease to work.
-        QSqlDatabasePrivate::addDatabase: duplicate connection name 'qt_sql_default_connection', old connection removed.
-        commit True
-        no such table: ovsinc Невозможно выполнить выражение
-        """
         ret = query.exec_()
         if not ret:
             print(query.lastError().text())
+
+        if reindex:
+            self._reindex()
+
         return ret
 
     def save_all2db(self, user, args):
         self.db.transaction()
         for kwargs in args:
-            self.save2db(user, kwargs)
+            self.save2db(user, kwargs, reindex=False)
+        self._reindex()
         print('commit all', self.db.commit())
 
     def get_month_pokaz(self, user, month):
         query = QSqlQuery(self.db)
         s_str = '{}-{:02d}-%'.format(cur_year(), int(month))
-        ret = query.exec_('''SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T}
-                FROM {table} WHERE {d} LIKE '{s_str}';
-                '''.format(d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+        ret = query.exec_("""SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T}
+                FROM {table} WHERE {d} LIKE '{s_str}' ORDER BY {d} DESC;
+                """.format(d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
                            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, s_str=s_str,
-                           table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
+                           table=query.driver().escapeIdentifier(user,
+                                                        QSqlDriver.TableName)
+                           )
                       )
         if not ret:
             print(query.lastError().text())
@@ -254,11 +261,14 @@ class PokazaniyaDB(FakeDB):
     def get_last_pokaz(self, user):
         query = QSqlQuery(self.db)
 
-        ret = query.exec_("SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T} from {table};".format(
-            d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
-            gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
-            table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
-        )
+        ret = query.exec_("""SELECT {d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T}
+            FROM {table} ORDER BY {d} DESC;
+            """.format(d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
+                    gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
+                    table=query.driver().escapeIdentifier(user,
+                                                    QSqlDriver.TableName)
+                        )
+                    )
         if not ret:
             print(query.lastError().text())
             return dict()
@@ -336,7 +346,6 @@ class Profjilcom(Conf):
         super(Profjilcom, self).__init__()
 
         self.response = None
-        self.status_code = None
         self.form_id = None
         self.form_value = None
         self.captcha_sid = None
@@ -345,19 +354,16 @@ class Profjilcom(Conf):
         self.authorized = False
 
     def connect(self, url=URL):
-        r = requests.get(url, headers=headers, cookies=self.cookies)
-        r.close()
-        #if resp.status_code == 403:
-        #    raise NotAthorized("Not authorized access")
-        #if resp.status_code // 500 == 1:
-        #    raise ServerError("Server size error")
-        #if not resp.ok:
-        #    raise ConnectionError("Coud not connect to %s. Code: %s" % (url, resp.status_code))
+        try:
+            r = requests.get(url, headers=headers, cookies=self.cookies)
+        except:
+            raise
+        finally:
+            r.close()
         self.response = r.text
-        self.status_code = r.status_code
         self.cookies.update(r.cookies)
 
-        return r.ok
+        return r.status_code
 
     def get_auth_form_values(self):
         sf_id = search(form_id, self.response)
@@ -415,8 +421,8 @@ class Profjilcom(Conf):
                     "form_build_id": self.form_value,
                     "form_id": "user_login_block"
                 }
-        r = requests.post(auth_url, form,
-                          cookies=self.cookies, headers=headers, allow_redirects=False)
+        r = requests.post(auth_url, form, cookies=self.cookies,
+                        headers=headers, allow_redirects=False)
 
         r.close()
         ret = r.ok
@@ -424,6 +430,7 @@ class Profjilcom(Conf):
         self.cookies.update(r.cookies)
 
         if r.status_code == 302:
+            print('auth', 302)
             r = requests.get(pokaz_url,
                              cookies=self.cookies, headers=headers)
             r.close()
@@ -432,13 +439,14 @@ class Profjilcom(Conf):
             if r.status_code == 403:
                 raise NotAthorized("Not authorized access")
 
+        self.cookies.update(r.cookies)  # update session cookies
+
         self.authorized = True
         self.username = user
-        self.cookies.update(r.cookies)  # update session cookies
+
         self.save()
 
         self.response = r.text
-        self.status_code = r.status_code
 
         return ret
 
@@ -521,9 +529,7 @@ class Profjilcom(Conf):
 
         print(tmp)
 
-        return tmp
-
-    def sync2db(self, pokaz):
         self.last_update = datetime.now().date()
-        PokazaniyaDB().save_all2db(self.username, pokaz)
         self.save()
+
+        return tmp
