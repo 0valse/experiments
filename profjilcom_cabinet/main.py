@@ -36,6 +36,24 @@ class MainFom(QtWidgets.QWidget):
         self.porazanie_previos_month = dict()
         self.porazanie_cur_month = dict()
 
+        rx = QRegExp('\d+[,.]{0,1}\d{0,2}')
+        self.hvs_hvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
+        self.hvs_hvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
+        self.gvs_gvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
+        self.gvs_gvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
+        self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QRegExpValidator(rx))
+        self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QRegExpValidator(rx))
+        self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QRegExpValidator(rx))
+
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab),
+            "История показаний")
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab),
+            "Отправить показания")
+
+        self.label_mounth.setText("""<html><head/><body>
+            <p><span style=" font-weight:600;">%s</span>.</p><
+            /body></html>""" % num2month(cur_month()))
+
         #подпись на сигналы
         self.closeButton.clicked.connect(self.goout)
         self.sendButton.clicked.connect(self.send)
@@ -95,32 +113,6 @@ class MainFom(QtWidgets.QWidget):
         else:
             self.AuthDialog.userEdit.setFocus()
 
-        rx = QRegExp('\d+[,.]{0,1}\d{0,2}')
-        self.hvs_hvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
-        self.hvs_hvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
-        self.gvs_gvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
-        self.gvs_gvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
-        self.prochie_pokazaniya_elektroenergiya.setValidator(QtGui.QRegExpValidator(rx))
-        self.prochie_pokazaniya_t2_noch.setValidator(QtGui.QRegExpValidator(rx))
-        self.potreblenie_tepla_schetchik_1.setValidator(QtGui.QRegExpValidator(rx))
-
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.PokazaniyaTab),
-            "История показаний")
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.SendTab),
-            "Отправить показания")
-
-        self.label_mounth.setText("""<html><head/><body>
-            <p><span style=" font-weight:600;">%s</span>.</p><
-            /body></html>""" % num2month(cur_month()))
-
-        # self.label_hvs_kuhnya_plus.setVisible(False)
-        # self.label_hvs_vannaya_plus.setVisible(False)
-        # self.label_gvs_kuhnya_plus.setVisible(False)
-        # self.label_gvs_vannaya_plus.setVisible(False)
-        # self.label_t1_plus.setVisible(False)
-        # self.label_t2_plus.setVisible(False)
-        # self.label_teplo_plus.setVisible(False)
-
         #check needs auth
         self.set_authorize(self.auth())
 
@@ -158,21 +150,29 @@ class MainFom(QtWidgets.QWidget):
         return ret
 
     def _connect(self, url):
-        ret = self.profs.connect(url)
-        if not ret:
-            if self.profs.status_code == 403:
-                print('403')
-                self.set_authorize(False)
-                return self.auth_form()
-
-            if self.profs.status_code // 500 == 1:
-                self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
-                return False
-
+        ret = False
+        try:
+            status_code = self.profs.connect(url)
+        except ConnectionError as e:
+            print(e.strerror)
             self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
+        except Exception as e:
+            print(e.strerror)
+            self.show_error("Ошибка соединения", "Неизвестная ошибка соединения с сервером!")
+
+        if status_code == 200:
+            ret = True
+        if status_code == 403:
+            self.set_authorize(False)
+            ret = self.auth_form()
+        if status_code // 500 == 1:
+            self.show_error("Ошибка сервера", "Сервер вернул ошибку!")
+            ret = False
 
         #except SiteStructFail:
         #    self.show_error("Ошибка сайта", "Структура сайта изменена, обратитесь к разработчику!")
+
+        print('_connect', ret, status_code)
         return ret
 
     def _set_plus(self, vidget, old, cur):
@@ -325,12 +325,22 @@ class MainFom(QtWidgets.QWidget):
         self.check_sendButton_visible()
 
 
+    @pyqtSlot()
+    def on_ReloadButton_clicked(self):
+        if self.authorized:
+            #TODO: send to db pokazania in other connection
+            self.pokaz.save_all2db(self.profs.username,
+                self.profs.get_all_pokazaniya())
+            self.model.select()
+
     def get_pokazaniya(self):
         if self.authorized:
             #TODO: send to db pokazania in other connection
-            self.profs.sync2db(self.profs.get_all_pokazaniya())
+            self.pokaz.save_all2db(self.profs.username,
+                self.profs.get_all_pokazaniya())
             #try:
-            #    self.profs.sync2db(self.profs.get_all_pokazaniya())
+            #    self.pokaz.save_all2db(self.profs.username,
+            #                        self.profs.get_all_pokazaniya())
             #except:
             #    self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
             #    return
@@ -345,15 +355,14 @@ class MainFom(QtWidgets.QWidget):
         self.model.setHeaderData(2, Qt.Horizontal, 'ХВС Ванная, м3')
         self.model.setHeaderData(3, Qt.Horizontal, 'ГВС Кухня, м3')
         self.model.setHeaderData(4, Qt.Horizontal, 'ГВС Ванная, м3')
-        self.model.setHeaderData(5, Qt.Horizontal, "Электричество\nДень, КВт/ч")
-        self.model.setHeaderData(6, Qt.Horizontal, "Электричество\nНочь, КВт/ч")
+        self.model.setHeaderData(5, Qt.Horizontal, "Электричество День, КВт/ч")
+        self.model.setHeaderData(6, Qt.Horizontal, "Электричество Ночь, КВт/ч")
         self.model.setHeaderData(7, Qt.Horizontal, "Отопление, КВт/ч")
         self.tableView.setModel(self.model)
 
-        # for i in range(self.model.rowCount()):
-        #    self.tableView.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.ResizeToContents)
-        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.tableView.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableView.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Stretch)
+        self.tableView.verticalHeader().hide()
 
         self.porazanie_previos_month = self.pokaz.get_month_pokaz(self.profs.username, previos_month())
         self.porazanie_cur_month = self.pokaz.get_last_pokaz(self.profs.username)
@@ -393,7 +402,8 @@ class MainFom(QtWidgets.QWidget):
             self.profs.logout()
             self.set_authorize(False)
         else:
-            self._connect(auth_url)
+            self.set_authorize(self.auth())
+            # self._connect(auth_url)
 
     def send(self):
         hvs_kuhnya = float(self.hvs_hvs_kuhnya.text().replace(',', '.'))
