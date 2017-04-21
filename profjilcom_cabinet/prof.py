@@ -491,6 +491,16 @@ class Profjilcom(Conf):
         tmp = list()
         # ищем только цифры (с десятичной запятой или точкой)
         m = compile(r'\d+[,.]{0,1}\d*')
+
+        '''
+        tree = etree.HTML(html)
+        for block in tree.xpath("//div[@class='product']"):
+            img = block.xpath("//img/@src")[0]
+            name = block.xpath("//tr[@class='name']")[0].text
+            id = block.xpath("//tr[@class='id']")[0].text
+        '''
+        # good parse HTML https://habrahabr.ru/post/220125/
+
         while True:
             xdate = tree.xpath('//*[@id="squeeze"]/div/div/div[2]/table[1]/tbody/tr[%d]/td[2]' % line)
             xlink = tree.xpath('//*[@id="squeeze"]/div/div/div[2]/table[1]/tbody/tr[%d]/td[3]/a' % line)

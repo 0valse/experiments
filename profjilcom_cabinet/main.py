@@ -14,6 +14,18 @@ from prof import (Profjilcom, PokazaniyaDB, auth_url,
 from prof import GVS_kuhnya, GVS_vanna, HVS_kuhnya, HVS_vanna, T1, T2, Teplo
 
 
+#http://programtalk.com/python-examples/PyQt5.QtWidgets.QProgressDialog/
+#https://aur.archlinux.org/packages/setools
+## запускать от отдельном потоке загрузку и отправку показаний (включая запись в базу)
+## использовать QProgressDialog
+
+
+##deploy
+# https://habrahabr.ru/post/264233/
+# https://m.habrahabr.ru/post/188816/
+# https://m.habrahabr.ru/post/325626/
+# https://bovs.org/post/144/
+
 
 class AuthDialog(QtWidgets.QDialog):
     def __init__(self, *args):
