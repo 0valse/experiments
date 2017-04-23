@@ -43,6 +43,9 @@ gvs_gvs_vannaya = 'submitted[gvs][gvs_vannaya]'
 prochie_pokazaniya_elektroenergiya = 'submitted[prochie_pokazaniya][elektroenergiya]'
 prochie_pokazaniya_t2_noch = 'submitted[prochie_pokazaniya][t2_noch]'
 potreblenie_tepla_schetchik_1 = 'submitted[potreblenie_tepla][schetchik_1]'
+adres_pomeshcheniya = 'submitted[dannye_zhilogo_pomeshcheniya][adres_pomeshcheniya]'
+nomer_licevogo_scheta = 'submitted[dannye_zhilogo_pomeshcheniya][nomer_licevogo_scheta]'
+
 
 
 Date = "Date"
@@ -452,7 +455,12 @@ class Profjilcom(Conf):
 
     
     def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya,
-                        gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
+                        gvs_kuhnya, gvs_vannaya, t1, t2, teplo,
+                        adres_pomeshcheniya, nomer_licevogo_scheta):
+        ## needs more:
+        #name="submitted[dannye_zhilogo_pomeshcheniya][adres_pomeshcheniya]"
+        #name="submitted[dannye_zhilogo_pomeshcheniya][nomer_licevogo_scheta]"
+
         form = {
             hvs_hvs_kuhnya: hvs_kuhnya, 
             hvs_hvs_vannaya: hvs_vannaya,
@@ -461,9 +469,11 @@ class Profjilcom(Conf):
             prochie_pokazaniya_elektroenergiya: t1,
             prochie_pokazaniya_t2_noch: t2,
             potreblenie_tepla_schetchik_1: teplo,
+            adres_pomeshcheniya: adres_pomeshcheniya,
+            nomer_licevogo_scheta: nomer_licevogo_scheta,
             "op": '%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C',  #отправить
                 }
-        r = requests.post(pokaz_url, form, cookies=self.cookies,
+        r = requests.post(pokaz_url, files=form, cookies=self.cookies,
                           headers=headers, allow_redirects=False)
         r.close()
         if r.status_code == 403:
@@ -481,7 +491,7 @@ class Profjilcom(Conf):
 
     def get_all_pokazaniya(self):
         # TODO: delet tested data
-        return [{'HVS_vanna': 38.0, 'HVS_kuhnya': 82.0, 'GVS_vanna': 48.0, 'GVS_kuhnya': 26.0, 'T1': 2616.0, 'T2': 718.0, 'Teplo': 11718.0, 'Date': '2017-03-26'}, {'HVS_vanna': 35.0, 'HVS_kuhnya': 78.0, 'GVS_vanna': 45.0, 'GVS_kuhnya': 25.0, 'T1': 2483.0, 'T2': 678.0, 'Teplo': 11174.0, 'Date': '2017-02-21'}, {'HVS_vanna': 30.0, 'HVS_kuhnya': 68.0, 'GVS_vanna': 39.0, 'GVS_kuhnya': 22.0, 'T1': 2016.0, 'T2': 578.0, 'Teplo': 9057.0, 'Date': '2016-12-26'}, {'HVS_vanna': 25.0, 'HVS_kuhnya': 64.0, 'GVS_vanna': 36.0, 'GVS_kuhnya': 21.0, 'T1': 1835.0, 'T2': 536.0, 'Teplo': 7999.0, 'Date': '2016-11-23'}, {'HVS_vanna': 22.0, 'HVS_kuhnya': 58.0, 'GVS_vanna': 32.0, 'GVS_kuhnya': 20.0, 'T1': 1603.0, 'T2': 473.0, 'Teplo': 7146.0, 'Date': '2016-10-25'}, {'HVS_vanna': 19.0, 'HVS_kuhnya': 53.0, 'GVS_vanna': 28.0, 'GVS_kuhnya': 18.0, 'T1': 1402.0, 'T2': 409.0, 'Teplo': 6477.0, 'Date': '2016-09-25'}, {'HVS_vanna': 16.0, 'HVS_kuhnya': 46.0, 'GVS_vanna': 24.0, 'GVS_kuhnya': 16.0, 'T1': 1268.0, 'T2': 335.0, 'Teplo': 6477.0, 'Date': '2016-08-23'}, {'HVS_vanna': 12.0, 'HVS_kuhnya': 39.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1155.0, 'T2': 267.0, 'Teplo': 6477.0, 'Date': '2016-07-24'}, {'HVS_vanna': 9.0, 'HVS_kuhnya': 33.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1045.0, 'T2': 219.0, 'Teplo': 6477.0, 'Date': '2016-06-23'}, {'HVS_vanna': 7.0, 'HVS_kuhnya': 28.0, 'GVS_vanna': 17.0, 'GVS_kuhnya': 13.0, 'T1': 943.0, 'T2': 171.0, 'Teplo': 6477.0, 'Date': '2016-05-24'}, {'HVS_vanna': 5.0, 'HVS_kuhnya': 24.0, 'GVS_vanna': 13.0, 'GVS_kuhnya': 11.0, 'T1': 854.0, 'T2': 137.0, 'Teplo': 6450.0, 'Date': '2016-04-23'}, {'HVS_vanna': 2.0, 'HVS_kuhnya': 18.0, 'GVS_vanna': 7.0, 'GVS_kuhnya': 8.0, 'T1': 696.0, 'T2': 83.0, 'Teplo': 5889.0, 'Date': '2016-03-23'}, {'HVS_vanna': 1.0, 'HVS_kuhnya': 13.0, 'GVS_vanna': 2.0, 'GVS_kuhnya': 6.0, 'T1': 526.0, 'T2': 28.0, 'Teplo': 5062.0, 'Date': '2016-02-20'}, {'HVS_vanna': 0.0, 'HVS_kuhnya': 8.0, 'GVS_vanna': 0.0, 'GVS_kuhnya': 5.0, 'T1': 349.0, 'T2': 13.0, 'Teplo': 41569.0, 'Date': '2016-01-25'}]
+        #return [{'HVS_vanna': 38.0, 'HVS_kuhnya': 82.0, 'GVS_vanna': 48.0, 'GVS_kuhnya': 26.0, 'T1': 2616.0, 'T2': 718.0, 'Teplo': 11718.0, 'Date': '2017-03-26'}, {'HVS_vanna': 35.0, 'HVS_kuhnya': 78.0, 'GVS_vanna': 45.0, 'GVS_kuhnya': 25.0, 'T1': 2483.0, 'T2': 678.0, 'Teplo': 11174.0, 'Date': '2017-02-21'}, {'HVS_vanna': 30.0, 'HVS_kuhnya': 68.0, 'GVS_vanna': 39.0, 'GVS_kuhnya': 22.0, 'T1': 2016.0, 'T2': 578.0, 'Teplo': 9057.0, 'Date': '2016-12-26'}, {'HVS_vanna': 25.0, 'HVS_kuhnya': 64.0, 'GVS_vanna': 36.0, 'GVS_kuhnya': 21.0, 'T1': 1835.0, 'T2': 536.0, 'Teplo': 7999.0, 'Date': '2016-11-23'}, {'HVS_vanna': 22.0, 'HVS_kuhnya': 58.0, 'GVS_vanna': 32.0, 'GVS_kuhnya': 20.0, 'T1': 1603.0, 'T2': 473.0, 'Teplo': 7146.0, 'Date': '2016-10-25'}, {'HVS_vanna': 19.0, 'HVS_kuhnya': 53.0, 'GVS_vanna': 28.0, 'GVS_kuhnya': 18.0, 'T1': 1402.0, 'T2': 409.0, 'Teplo': 6477.0, 'Date': '2016-09-25'}, {'HVS_vanna': 16.0, 'HVS_kuhnya': 46.0, 'GVS_vanna': 24.0, 'GVS_kuhnya': 16.0, 'T1': 1268.0, 'T2': 335.0, 'Teplo': 6477.0, 'Date': '2016-08-23'}, {'HVS_vanna': 12.0, 'HVS_kuhnya': 39.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1155.0, 'T2': 267.0, 'Teplo': 6477.0, 'Date': '2016-07-24'}, {'HVS_vanna': 9.0, 'HVS_kuhnya': 33.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1045.0, 'T2': 219.0, 'Teplo': 6477.0, 'Date': '2016-06-23'}, {'HVS_vanna': 7.0, 'HVS_kuhnya': 28.0, 'GVS_vanna': 17.0, 'GVS_kuhnya': 13.0, 'T1': 943.0, 'T2': 171.0, 'Teplo': 6477.0, 'Date': '2016-05-24'}, {'HVS_vanna': 5.0, 'HVS_kuhnya': 24.0, 'GVS_vanna': 13.0, 'GVS_kuhnya': 11.0, 'T1': 854.0, 'T2': 137.0, 'Teplo': 6450.0, 'Date': '2016-04-23'}, {'HVS_vanna': 2.0, 'HVS_kuhnya': 18.0, 'GVS_vanna': 7.0, 'GVS_kuhnya': 8.0, 'T1': 696.0, 'T2': 83.0, 'Teplo': 5889.0, 'Date': '2016-03-23'}, {'HVS_vanna': 1.0, 'HVS_kuhnya': 13.0, 'GVS_vanna': 2.0, 'GVS_kuhnya': 6.0, 'T1': 526.0, 'T2': 28.0, 'Teplo': 5062.0, 'Date': '2016-02-20'}, {'HVS_vanna': 0.0, 'HVS_kuhnya': 8.0, 'GVS_vanna': 0.0, 'GVS_kuhnya': 5.0, 'T1': 349.0, 'T2': 13.0, 'Teplo': 41569.0, 'Date': '2016-01-25'}]
         # get main page
         r = requests.get(archive_url,
                          cookies=self.cookies, headers=headers)
