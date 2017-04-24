@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1325</width>
-    <height>519</height>
+    <width>1270</width>
+    <height>580</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Личный кабинет УК profjilkom.ru</string>
+  </property>
+  <property name="toolTip">
+   <string>Личный кабинет УК profjilkom.ru</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
@@ -48,6 +51,9 @@
            <weight>75</weight>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Статус пользователя на сайте &lt;a href=&quot;http://cabinet.profjilkom.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;кабинета УК&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Не авторизован</string>
@@ -110,6 +116,9 @@
          <underline>true</underline>
         </font>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Имя авторизованного пользователя в &lt;a href=&quot;http://cabinet.profjilkom.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;кабинета УК&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Аноним</string>
        </property>
@@ -130,6 +139,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="DisconnectButton">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Войти на сайт  &lt;a href=&quot;http://cabinet.profjilkom.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;кабинета УК&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Войти на сайт</string>
        </property>
@@ -146,6 +158,9 @@
       <number>0</number>
      </property>
      <widget class="QWidget" name="PokazaniyaTab">
+      <property name="toolTip">
+       <string>Вкладка с историей предыдущих показания счётчиков</string>
+      </property>
       <attribute name="title">
        <string>Tab 1</string>
       </attribute>
@@ -171,6 +186,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
           <widget class="QPushButton" name="ReloadButton">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Обновить показания с сайта &lt;a href=&quot;http://cabinet.profjilkom.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;кабинета УК&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Обновить</string>
            </property>
@@ -184,6 +202,36 @@
            <property name="sizeHint" stdset="0">
             <size>
              <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Статус обновления:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QProgressBar" name="update_progressBar">
+           <property name="value">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_36">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
              <height>20</height>
             </size>
            </property>
@@ -233,6 +281,9 @@
       </layout>
      </widget>
      <widget class="QWidget" name="SendTab">
+      <property name="toolTip">
+       <string>Ввод показаний для отправки на сайт кабинета УК</string>
+      </property>
       <attribute name="title">
        <string>Tab 2</string>
       </attribute>
@@ -265,7 +316,7 @@
          <item>
           <widget class="QLabel" name="label_mounth">
            <property name="text">
-            <string>TextLabel</string>
+            <string/>
            </property>
           </widget>
          </item>
@@ -334,6 +385,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Показаания потребления ХВС стояка в кухне</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -367,6 +421,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Показаания потребления ХВС стояка в ванной комнаты</string>
                </property>
               </widget>
              </item>
@@ -402,6 +459,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Показаания потребления ГВС стояка в кухне</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -435,6 +495,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Показаания потребления ГВС стояка в ванной комнаты</string>
                </property>
               </widget>
              </item>
@@ -470,6 +533,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Показания электросчётчика Т1 (день)</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -504,6 +570,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Показания электросчётчика Т2 (ночь)</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -537,6 +606,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Показания теплосчётчика</string>
                </property>
                <property name="inputMask">
                 <string notr="true"/>
@@ -908,6 +980,13 @@
         </layout>
        </item>
        <item>
+        <widget class="QLabel" name="label_17">
+         <property name="text">
+          <string>Внимание. При отправке введеные показания будет округлены до целых.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -942,6 +1021,9 @@
           <widget class="QPushButton" name="sendButton">
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Отправить показания на сайт &lt;a href=&quot;http://cabinet.profjilkom.ru/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#2980b9;&quot;&gt;кабинета УК&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Отправить</string>
@@ -984,6 +1066,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="closeButton">
+       <property name="toolTip">
+        <string>Завершить приложение</string>
+       </property>
        <property name="text">
         <string>Закрыть</string>
        </property>
