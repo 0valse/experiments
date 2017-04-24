@@ -46,9 +46,8 @@ class MainFom(QtWidgets.QWidget):
         self.AuthDialog = AuthDialog()
 
         self.porazanie_previos_month = dict()
-        self.porazanie_cur_month = dict()
 
-        rx = QRegExp('\d+[,.]{0,1}\d{0,2}')
+        rx = QRegExp('\d+')
         self.hvs_hvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
         self.hvs_hvs_vannaya.setValidator(QtGui.QRegExpValidator(rx))
         self.gvs_gvs_kuhnya.setValidator(QtGui.QRegExpValidator(rx))
@@ -103,12 +102,24 @@ class MainFom(QtWidgets.QWidget):
             self.UserLabel.setText(self.profs.username)
             self.statusLabel.setText("Авторизован")
             self.DisconnectButton.setText("Выйти")
+            self.DisconnectButton.setToolTip("""<html>
+                <head/>
+                <body>
+                    <p>Завершить работу с сайтом <a href="http://cabinet.profjilkom.ru/"><span style=" text-decoration: underline; color:#2980b9;">cabinet.profjilkom.ru</span></a></p>
+                </body></html>
+            """)
             # self.sendButton.setEnabled(True)
         else:
             self.authorized = False
             self.UserLabel.setText("Аноним")
             self.statusLabel.setText("Не авторизован")
             self.DisconnectButton.setText("Войти на сайт")
+            self.DisconnectButton.setToolTip("""<html>
+                <head/>
+                <body>
+                    <p>Войти на сайт <a href="http://cabinet.profjilkom.ru/"><span style=" text-decoration: underline; color:#2980b9;">cabinet.profjilkom.ru</span></a></p>
+                </body></html>
+            """)
             # self.sendButton.setEnabled(False)
 
     @property
@@ -187,9 +198,40 @@ class MainFom(QtWidgets.QWidget):
         print('_connect', ret, status_code)
         return ret
 
-    def _set_plus(self, vidget, old, cur):
+    def _set_plus_m3(self, vidget, old, cur):
         diff = cur - old
         ed = 'м<span style=" vertical-align:super;">3</span>'
+        old_str = '{old} {ed} в прошлом месяце'.format(old=old, ed=ed)
+        if diff < 0:
+            html = '''<html>
+            <head/>
+            <body>
+                <p>
+                    {old_str}
+                </p>
+            </body>
+            </html>'''.format(old_str=old_str)
+        else:
+            html = '''<html>
+            <body>
+                <p>
+                    <span style="font-weight:600;">
+                    +{diff}
+                    </span>
+                     {ed} к показаниям за {prev_month} ({old_str})
+                </p>
+            </body>
+            </html>'''.format(
+                diff=diff,
+                ed=ed,
+                old_str=old_str,
+                prev_month=num2month(previos_month())
+            )
+        vidget.setText(html)
+
+    def _set_plus_kvt(self, vidget, old, cur):
+        diff = cur - old
+        ed = 'КВт'
         old_str = '{old} {ed} в прошлом месяце'.format(old=old, ed=ed)
         if diff < 0:
             html = '''<html>
@@ -241,99 +283,99 @@ class MainFom(QtWidgets.QWidget):
     def hvs_vannaya_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.hvs_hvs_vannaya.text())
+            cur_pokazanie = int(self.hvs_hvs_vannaya.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(HVS_vanna)
         else:
             self._update_pokaz_list(HVS_vanna)
-        prev_pokazanie = float(self.porazanie_previos_month.get(HVS_vanna))
+        prev_pokazanie = int(self.porazanie_previos_month.get(HVS_vanna))
 
-        self._set_plus(self.label_hvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_m3(self.label_hvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def gvs_vannaya_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.gvs_gvs_vannaya.text())
+            cur_pokazanie = int(self.gvs_gvs_vannaya.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(GVS_vanna)
         else:
             self._update_pokaz_list(GVS_vanna)
-        prev_pokazanie = float(self.porazanie_previos_month.get(GVS_vanna))
+        prev_pokazanie = int(self.porazanie_previos_month.get(GVS_vanna))
         
-        self._set_plus(self.label_gvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_m3(self.label_gvs_vannaya_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def hvs_kuhnya_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.hvs_hvs_kuhnya.text())
+            cur_pokazanie = int(self.hvs_hvs_kuhnya.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(HVS_kuhnya)
         else:
             self._update_pokaz_list(HVS_kuhnya)
-        prev_pokazanie = float(self.porazanie_previos_month.get(HVS_kuhnya))
+        prev_pokazanie = int(self.porazanie_previos_month.get(HVS_kuhnya))
         
-        self._set_plus(self.label_hvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_m3(self.label_hvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def gvs_kuhnya_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.gvs_gvs_kuhnya.text())
+            cur_pokazanie = int(self.gvs_gvs_kuhnya.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(GVS_kuhnya)
         else:
             self._update_pokaz_list(GVS_kuhnya)
-        prev_pokazanie = float(self.porazanie_previos_month.get(GVS_kuhnya))
+        prev_pokazanie = int(self.porazanie_previos_month.get(GVS_kuhnya))
         
-        self._set_plus(self.label_gvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_m3(self.label_gvs_kuhnya_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def label_t1_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.prochie_pokazaniya_elektroenergiya.text())
+            cur_pokazanie = int(self.prochie_pokazaniya_elektroenergiya.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(T1)
         else:
             self._update_pokaz_list(T1)
-        prev_pokazanie = float(self.porazanie_previos_month.get(T1))
+        prev_pokazanie = int(self.porazanie_previos_month.get(T1))
 
-        self._set_plus(self.label_t1_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_kvt(self.label_t1_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def label_t2_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.prochie_pokazaniya_t2_noch.text())
+            cur_pokazanie = int(self.prochie_pokazaniya_t2_noch.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(T2)
         else:
             self._update_pokaz_list(T2)
-        prev_pokazanie = float(self.porazanie_previos_month.get(T1))
+        prev_pokazanie = int(self.porazanie_previos_month.get(T2))
 
-        self._set_plus(self.label_t2_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_kvt(self.label_t2_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
     def label_teplo_plus_editingFinished(self):
         self.timer.stop()
         try:
-            cur_pokazanie = float(self.potreblenie_tepla_schetchik_1.text())
+            cur_pokazanie = int(self.potreblenie_tepla_schetchik_1.text())
         except ValueError:
             cur_pokazanie = 0
             self._del_pokaz_list_item(Teplo)
         else:
             self._update_pokaz_list(Teplo)
-        prev_pokazanie = float(self.porazanie_previos_month.get(Teplo))
+        prev_pokazanie = int(self.porazanie_previos_month.get(Teplo))
         
-        self._set_plus(self.label_teplo_plus, prev_pokazanie, cur_pokazanie)
+        self._set_plus_kvt(self.label_teplo_plus, prev_pokazanie, cur_pokazanie)
         self.check_sendButton_visible()
 
 
@@ -367,33 +409,46 @@ class MainFom(QtWidgets.QWidget):
         self.model.setHeaderData(2, Qt.Horizontal, 'ХВС Ванная, м3')
         self.model.setHeaderData(3, Qt.Horizontal, 'ГВС Кухня, м3')
         self.model.setHeaderData(4, Qt.Horizontal, 'ГВС Ванная, м3')
-        self.model.setHeaderData(5, Qt.Horizontal, "Электричество День, КВт/ч")
-        self.model.setHeaderData(6, Qt.Horizontal, "Электричество Ночь, КВт/ч")
-        self.model.setHeaderData(7, Qt.Horizontal, "Отопление, КВт/ч")
+        self.model.setHeaderData(5, Qt.Horizontal, "Электричество День, КВт")
+        self.model.setHeaderData(6, Qt.Horizontal, "Электричество Ночь, КВт")
+        self.model.setHeaderData(7, Qt.Horizontal, "Отопление, КВт")
         self.tableView.setModel(self.model)
 
         self.tableView.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Stretch)
         self.tableView.verticalHeader().hide()
 
-        self.porazanie_previos_month = self.pokaz.get_month_pokaz(self.profs.username, previos_month())
-        self.porazanie_cur_month = self.pokaz.get_last_pokaz(self.profs.username)
+        self.porazanie_previos_month = self.pokaz.get_last_pokaz(self.profs.username)
 
-        self._set_previos(self.label_hvs_kuhnya_plus, HVS_kuhnya)
-        self._set_previos(self.label_hvs_vannaya_plus, HVS_vanna)
-        self._set_previos(self.label_gvs_kuhnya_plus, GVS_kuhnya)
-        self._set_previos(self.label_gvs_vannaya_plus, GVS_vanna)
-        self._set_previos(self.label_t1_plus, T1)
-        self._set_previos(self.label_t2_plus, T2)
-        self._set_previos(self.label_teplo_plus, Teplo)
+        self._set_previos_m3(self.label_hvs_kuhnya_plus, HVS_kuhnya)
+        self._set_previos_m3(self.label_hvs_vannaya_plus, HVS_vanna)
+        self._set_previos_m3(self.label_gvs_kuhnya_plus, GVS_kuhnya)
+        self._set_previos_m3(self.label_gvs_vannaya_plus, GVS_vanna)
+        self._set_previos_kvt(self.label_t1_plus, T1)
+        self._set_previos_kvt(self.label_t2_plus, T2)
+        self._set_previos_kvt(self.label_teplo_plus, Teplo)
 
-    def _set_previos(self, vidget, pokaz_name):
+    def _set_previos_m3(self, vidget, pokaz_name):
         old_str = self.porazanie_previos_month.get(pokaz_name, None)
         if old_str is not None:
             html = '''<html>
             <head/>
     <body>
         <p>{old_str} м<span style=" font-weight:400; vertical-align:super;">3</span> в прошлом месяце.</p>
+    </body>
+            </html>'''.format(old_str=old_str)
+            vidget.setText(html)
+            vidget.setVisible(True)
+        else:
+            vidget.setVisible(False)
+
+    def _set_previos_kvt(self, vidget, pokaz_name):
+        old_str = self.porazanie_previos_month.get(pokaz_name, None)
+        if old_str is not None:
+            html = '''<html>
+            <head/>
+    <body>
+        <p>{old_str} КВт в прошлом месяце.</p>
     </body>
             </html>'''.format(old_str=old_str)
             vidget.setText(html)
@@ -417,14 +472,24 @@ class MainFom(QtWidgets.QWidget):
             self.set_authorize(self.auth())
             # self._connect(auth_url)
 
+    def _pokaz_clean(self):
+        self.hvs_hvs_kuhnya.clear()
+        self.hvs_hvs_vannaya.clear()
+        self.gvs_gvs_kuhnya.clear()
+        self.gvs_gvs_vannaya.clear()
+        self.prochie_pokazaniya_elektroenergiya.clear()
+        self.prochie_pokazaniya_t2_noch.clear()
+        self.potreblenie_tepla_schetchik_1.clear()
+        self.sendButton.setEnabled(False)
+
     def send(self):
-        hvs_kuhnya = float(self.hvs_hvs_kuhnya.text().replace(',', '.'))
-        hvs_vannaya = float(self.hvs_hvs_vannaya.text().replace(',', '.'))
-        gvs_kuhnya = float(self.gvs_gvs_kuhnya.text().replace(',', '.'))
-        gvs_vannaya = float(self.gvs_gvs_vannaya.text().replace(',', '.'))
-        t1 = float(self.prochie_pokazaniya_elektroenergiya.text().replace(',', '.'))
-        t2 = float(self.prochie_pokazaniya_t2_noch.text().replace(',', '.'))
-        teplo = float(self.potreblenie_tepla_schetchik_1.text().replace(',', '.'))
+        hvs_kuhnya = self.hvs_hvs_kuhnya.text()
+        hvs_vannaya = self.hvs_hvs_vannaya.text()
+        gvs_kuhnya = self.gvs_gvs_kuhnya.text()
+        gvs_vannaya = self.gvs_gvs_vannaya.text()
+        t1 = self.prochie_pokazaniya_elektroenergiya.text()
+        t2 = self.prochie_pokazaniya_t2_noch.text()
+        teplo = self.potreblenie_tepla_schetchik_1.text()
 
         if (hvs_kuhnya and hvs_vannaya and gvs_vannaya and gvs_kuhnya and t1 and t2 and teplo):
             try:
@@ -432,14 +497,25 @@ class MainFom(QtWidgets.QWidget):
             except NotAthorized:
                 self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
                 self._connect(auth_url)
-            except:
+            except IndexError:
+                self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
+            except Exception as e:
+                print(e)
                 self.show_error("Ошибка соединения", "Не удаётся соединиться с сервером!")
+            else:
+                self.show_info("Показания отправлены", "Ваши показания успешно отправлены на сайт!")
+                self._pokaz_clean()
+                #FIXME: костыль. потеря соединения после отправки
+                # сохраянть в базу черерз модель
+                self.pokaz.__init__()
         else:
             self.show_error("Пустые поля", "Все поля должны быть заполнены!")
 
     def goout(self):
         self.close()
 
+    def show_info(self, title, msg):
+        return self._show_MSG(QtWidgets.QMessageBox.information, title, msg)
     def show_warning(self, title, msg):
         return self._show_MSG(QtWidgets.QMessageBox.warning, title, msg)
     def show_error(self, title, msg):

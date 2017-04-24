@@ -45,7 +45,11 @@ prochie_pokazaniya_t2_noch = 'submitted[prochie_pokazaniya][t2_noch]'
 potreblenie_tepla_schetchik_1 = 'submitted[potreblenie_tepla][schetchik_1]'
 adres_pomeshcheniya = 'submitted[dannye_zhilogo_pomeshcheniya][adres_pomeshcheniya]'
 nomer_licevogo_scheta = 'submitted[dannye_zhilogo_pomeshcheniya][nomer_licevogo_scheta]'
-
+hvs_hvs_schetchik_3 = 'submitted[hvs][hvs_schetchik_3]'  #//*[@id="edit-submitted-hvs-hvs-schetchik-3"]
+hvs_hvs_schetchik_4 = 'submitted[hvs][schetchik_4]'  #//*[@id="edit-submitted-hvs-schetchik-4"]
+gvs_gvs_schetchik_3 = 'submitted[gvs][gvs_schetchik_3]' #//*[@id="edit-submitted-gvs-gvs-schetchik-3"]
+gvs_gvs_schetchik_4 = 'submitted[gvs][gvs_schetchik_4]'  #//*[@id="edit-submitted-gvs-gvs-schetchik-4"]
+prochie_pokazaniya_obshchee = 'submitted[prochie_pokazaniya][obshchee]'  #//*[@id="edit-submitted-prochie-pokazaniya-obshchee"]
 
 
 Date = "Date"
@@ -137,14 +141,14 @@ class FakeDB:
         # создать базу, если её нет
         ret = query.exec_("""
             CREATE TABLE IF NOT EXISTS {table} (
-            {d} TEXT NOT NULL,
-            {hv} REAL NOT NULL,
-            {hk} REAL NOT NULL,
-            {gv} REAL NOT NULL,
-            {gk} REAL NOT NULL,
-            {t1} REAL NOT NULL,
-            {t2} REAL NOT NULL,
-            {T} REAL NOT NULL);""".format(
+            {d} DATE NOT NULL,
+            {hv} INTEGER NOT NULL,
+            {hk} INTEGER NOT NULL,
+            {gv} INTEGER NOT NULL,
+            {gk} INTEGER NOT NULL,
+            {t1} INTEGER NOT NULL,
+            {t2} INTEGER NOT NULL,
+            {T} INTEGER NOT NULL);""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo, table=user)
         )
@@ -168,7 +172,7 @@ class FakeDB:
                            'Teplo': '41569', 'Date': '2016-01-25'}):
         query = QSqlQuery(self.db)
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                        VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+                        VALUES (date(:{d}), :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
             table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
@@ -207,7 +211,7 @@ class PokazaniyaDB(FakeDB):
         query = QSqlQuery(self.db)
         #дублирование записей
         query.prepare("""REPLACE INTO {table}({d}, {hv}, {hk}, {gv}, {gk}, {t1}, {t2}, {T})
-                        VALUES (:{d}, :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
+                        VALUES (date(:{d}), :{hv}, :{hk}, :{gv}, :{gk}, :{t1}, :{t2}, :{T});""".format(
             d=Date, hv=HVS_vanna, hk=HVS_kuhnya, gv=GVS_vanna,
             gk=GVS_kuhnya, t1=T1, t2=T2, T=Teplo,
             table=query.driver().escapeIdentifier(user, QSqlDriver.TableName))
@@ -455,13 +459,41 @@ class Profjilcom(Conf):
 
     
     def send_pokazaniya(self, hvs_kuhnya, hvs_vannaya,
-                        gvs_kuhnya, gvs_vannaya, t1, t2, teplo,
-                        adres_pomeshcheniya, nomer_licevogo_scheta):
-        ## needs more:
-        #name="submitted[dannye_zhilogo_pomeshcheniya][adres_pomeshcheniya]"
-        #name="submitted[dannye_zhilogo_pomeshcheniya][nomer_licevogo_scheta]"
+                        gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
+        #TODO: это костыльно. Подумать как построить правильно дерево сайта
 
-        form = {
+        
+        
+        self.connect(pokaz_url)
+        tree = etree.HTML(self.response)
+
+        #with open('./Ввод показаний индивидуальных приборов учета _ Личный кабинет.html', 'rb') as f:
+        #    data = f.read()
+        #    tree = etree.HTML(data)
+        #pokaz_url = 'http://200ok-debian.rd.ptsecurity.ru:8000/post'
+
+        xaddr = tree.xpath(
+            """//*[@id="edit-submitted-dannye-zhilogo-pomeshcheniya-adres-pomeshcheniya"]"""
+            )[0]
+        adres = xaddr.get('value', "")
+
+        xnum = tree.xpath(
+            """//*[@id="edit-submitted-dannye-zhilogo-pomeshcheniya-nomer-licevogo-scheta"]"""
+            )[0]
+        nlic = xnum.get('value', "")
+
+        h = headers
+        h['Origin'] = 'http://cabinet.profjilkom.ru'
+        h['Upgrade-Insecure-Requests'] = '1'
+
+        hvs_schetchik_3 = ''  #//*[@id="edit-submitted-hvs-hvs-schetchik-3"]
+        hvs_schetchik_4 = ''  #//*[@id="edit-submitted-hvs-schetchik-4"]
+        gvs_schetchik_3 = '' #//*[@id="edit-submitted-gvs-gvs-schetchik-3"]
+        gvs_schetchik_4 = ''  #//*[@id="edit-submitted-gvs-gvs-schetchik-4"]
+        el_pokazaniya_obshchee = ''  #//*[@id="edit-submitted-prochie-pokazaniya-obshchee"]
+
+        from requests_toolbelt.multipart.encoder import MultipartEncoder
+        multipart_form_data = {
             hvs_hvs_kuhnya: hvs_kuhnya, 
             hvs_hvs_vannaya: hvs_vannaya,
             gvs_gvs_kuhnya: gvs_kuhnya,
@@ -469,22 +501,33 @@ class Profjilcom(Conf):
             prochie_pokazaniya_elektroenergiya: t1,
             prochie_pokazaniya_t2_noch: t2,
             potreblenie_tepla_schetchik_1: teplo,
-            adres_pomeshcheniya: adres_pomeshcheniya,
-            nomer_licevogo_scheta: nomer_licevogo_scheta,
+            adres_pomeshcheniya: adres,
+            nomer_licevogo_scheta: nlic,
+            hvs_hvs_schetchik_3: hvs_schetchik_3,
+            hvs_hvs_schetchik_4: hvs_schetchik_4,
+            gvs_gvs_schetchik_3: gvs_schetchik_3,
+            gvs_gvs_schetchik_4: gvs_schetchik_4,
+            prochie_pokazaniya_obshchee: el_pokazaniya_obshchee,
             "op": '%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C',  #отправить
                 }
-        r = requests.post(pokaz_url, files=form, cookies=self.cookies,
-                          headers=headers, allow_redirects=False)
+
+        r = requests.post(pokaz_url, data=MultipartEncoder(multipart_form_data), cookies=self.cookies,
+                          headers=h, allow_redirects=True)
         r.close()
+        print(r.status_code, r.is_redirect, r.headers, r.url)
+
         if r.status_code == 403:
             raise NotAthorized("Not authorized access")
         if not r.ok:
             raise ConnectionError("Coud not connect to %s. Errcode: %s" % (pokaz_url, r.status_code))
         ret = PokazaniyaDB().save2db(self.username,
-                               dict(HVS_vanna=str(hvs_vannaya), HVS_kuhnya=str(hvs_kuhnya),
-                                         GVS_vanna=str(gvs_vannaya), GVS_kuhnya=str(gvs_kuhnya),
-                                         T1=str(t1), T2=str(t2), Teplo=str(teplo),
-                                         Date=str(datetime.now().date().isoformat())
+                               dict(HVS_vanna=int(hvs_vannaya),
+                                    HVS_kuhnya=int(hvs_kuhnya),
+                                     GVS_vanna=int(gvs_vannaya),
+                                     GVS_kuhnya=int(gvs_kuhnya),
+                                     T1=int(t1), T2=int(t2),
+                                     Teplo=int(teplo),
+                                     Date=str(datetime.now().date().isoformat())
                                     )
                                )
         return ret
@@ -531,13 +574,13 @@ class Profjilcom(Conf):
             # нужно: что есть такой xpath; проверять, что найдены цифры
 
             # на сайте в показаниях отделяются тысячи с помощью ","
-            hvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            hvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            gvs_kuhnya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            gvs_vannaya = float(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            t1 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            t2 = float(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
-            teplo = float(m.match(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            hvs_kuhnya = int(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            hvs_vannaya = int(m.match(p.xpath('//*[@id="edit-submitted-hvs-hvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            gvs_kuhnya = int(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-kuhnya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            gvs_vannaya = int(m.match(p.xpath('//*[@id="edit-submitted-gvs-gvs-vannaya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            t1 = int(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-elektroenergiya"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            t2 = int(m.match(p.xpath('//*[@id="edit-submitted-prochie-pokazaniya-t2-noch"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
+            teplo = int(m.match(p.xpath('//*[@id="edit-submitted-potreblenie-tepla-schetchik-1"]')[0].xpath('text()')[0]).group(0).replace(',', ''))
 
             tmp.append(dict(HVS_vanna=hvs_vannaya, HVS_kuhnya=hvs_kuhnya,
                             GVS_vanna=gvs_vannaya, GVS_kuhnya=gvs_kuhnya,
