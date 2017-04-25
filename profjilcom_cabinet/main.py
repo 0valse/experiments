@@ -497,7 +497,8 @@ class MainFom(QtWidgets.QWidget):
             except NotAthorized:
                 self.show_warning("Ошибка авторизации", "Требуется сначала авторизоваться!")
                 self._connect(auth_url)
-            except IndexError:
+            except IndexError as e:
+                print(e)
                 self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
             except Exception as e:
                 print(e)
@@ -522,8 +523,8 @@ class MainFom(QtWidgets.QWidget):
         return self._show_MSG(QtWidgets.QMessageBox.critical, title, msg)
     def _show_MSG(self, status=QtWidgets.QMessageBox.warning, title="", msg=""):
         return status(self, title, msg,
-                        QtWidgets.QMessageBox.Cancel,
-                        QtWidgets.QMessageBox.Cancel)
+                        QtWidgets.QMessageBox.Close,
+                        QtWidgets.QMessageBox.Close)
 
 
 if __name__ == "__main__":
