@@ -1,5 +1,6 @@
 import os
 from re import compile, match, search
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 import platform
 from datetime import datetime
 import pickle
@@ -462,12 +463,10 @@ class Profjilcom(Conf):
                         gvs_kuhnya, gvs_vannaya, t1, t2, teplo):
         #TODO: это костыльно. Подумать как построить правильно дерево сайта
 
-        
-        
         self.connect(pokaz_url)
         tree = etree.HTML(self.response)
 
-        #with open('./Ввод показаний индивидуальных приборов учета _ Личный кабинет.html', 'rb') as f:
+        #with open('./doc.html', 'rb') as f:
         #    data = f.read()
         #    tree = etree.HTML(data)
         #pokaz_url = 'http://200ok-debian.rd.ptsecurity.ru:8000/post'
@@ -482,9 +481,29 @@ class Profjilcom(Conf):
             )[0]
         nlic = xnum.get('value', "")
 
-        h = headers
-        h['Origin'] = 'http://cabinet.profjilkom.ru'
-        h['Upgrade-Insecure-Requests'] = '1'
+        xsid =  tree.xpath('''//*[@id="edit-details-sid"]''')[0]
+        sid = xsid.get('value', '')
+        
+        xpage_num =  tree.xpath('''//*[@id="edit-details-page-num"]''')[0]
+        page_num = xpage_num.get('value', '')
+        
+        xpage_count =  tree.xpath('''//*[@id="edit-details-page-count"]''')[0]
+        page_count = xpage_count.get('value', '')
+        
+        xfinished =  tree.xpath('''//*[@id="edit-details-finished"]''')[0]
+        finished = xfinished.get('value', '')
+        
+        xform_build_id = tree.xpath('''//*[@name="form_build_id"]''')[0]
+        form_build_id = xform_build_id.get('value', '')
+        
+        xform_token =  tree.xpath('''//*[@id="edit-webform-client-form-1-form-token"]''')[0]
+        form_token = xform_token.get('value', '')
+        
+        xform_id =  tree.xpath('''//*[@id="edit-webform-client-form-1"]''')[0]
+        form_id = xform_id.get('value', '')
+
+        xop = tree.xpath('''//*[@id="edit-submit"]''')[0]
+        op = xop.get('value', '')
 
         hvs_schetchik_3 = ''  #//*[@id="edit-submitted-hvs-hvs-schetchik-3"]
         hvs_schetchik_4 = ''  #//*[@id="edit-submitted-hvs-schetchik-4"]
@@ -492,26 +511,38 @@ class Profjilcom(Conf):
         gvs_schetchik_4 = ''  #//*[@id="edit-submitted-gvs-gvs-schetchik-4"]
         el_pokazaniya_obshchee = ''  #//*[@id="edit-submitted-prochie-pokazaniya-obshchee"]
 
-        from requests_toolbelt.multipart.encoder import MultipartEncoder
         multipart_form_data = {
-            hvs_hvs_kuhnya: hvs_kuhnya, 
-            hvs_hvs_vannaya: hvs_vannaya,
-            gvs_gvs_kuhnya: gvs_kuhnya,
-            gvs_gvs_vannaya: gvs_vannaya, 
-            prochie_pokazaniya_elektroenergiya: t1,
-            prochie_pokazaniya_t2_noch: t2,
-            potreblenie_tepla_schetchik_1: teplo,
             adres_pomeshcheniya: adres,
             nomer_licevogo_scheta: nlic,
+            hvs_hvs_kuhnya: hvs_kuhnya, 
+            hvs_hvs_vannaya: hvs_vannaya,
             hvs_hvs_schetchik_3: hvs_schetchik_3,
             hvs_hvs_schetchik_4: hvs_schetchik_4,
+            gvs_gvs_kuhnya: gvs_kuhnya,
+            gvs_gvs_vannaya: gvs_vannaya,
             gvs_gvs_schetchik_3: gvs_schetchik_3,
             gvs_gvs_schetchik_4: gvs_schetchik_4,
+            prochie_pokazaniya_elektroenergiya: t1,
+            prochie_pokazaniya_t2_noch: t2,
             prochie_pokazaniya_obshchee: el_pokazaniya_obshchee,
-            "op": '%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C',  #отправить
+            potreblenie_tepla_schetchik_1: teplo,
+            'details[sid]': sid,
+            'details[page_num]': page_num,
+            'details[page_count]': page_count,
+            'details[finished]': finished,
+            'form_build_id': form_build_id,
+            'form_token': form_token,
+            'form_id': form_id,
+            "op": op,
                 }
 
-        r = requests.post(pokaz_url, data=MultipartEncoder(multipart_form_data), cookies=self.cookies,
+        h = headers
+        h['Origin'] = 'http://cabinet.profjilkom.ru'
+        h['Upgrade-Insecure-Requests'] = '1'
+        m = MultipartEncoder(multipart_form_data)
+        h['Content-Type'] = m.content_type
+
+        r = requests.post(pokaz_url, data=m, cookies=self.cookies,
                           headers=h, allow_redirects=True)
         r.close()
         print(r.status_code, r.is_redirect, r.headers, r.url)
