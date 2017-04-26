@@ -383,25 +383,22 @@ class MainFom(QtWidgets.QWidget):
     def on_ReloadButton_clicked(self):
         if self.authorized:
             #TODO: send to db pokazania in other connection
-            self.pokaz.save_all2db(self.profs.username,
-                self.profs.get_all_pokazaniya())
-            self.model.select()
+            pokaz = self.profs.get_all_pokazaniya(force=True)
+            if pokaz is not None:
+                self.pokaz.save_all2db(self.profs.username, pokaz)
+                self.model.select()
 
     def get_pokazaniya(self):
-        if self.authorized:
-            #TODO: send to db pokazania in other connection
-            self.pokaz.save_all2db(self.profs.username,
-                self.profs.get_all_pokazaniya())
-            #try:
-            #    self.pokaz.save_all2db(self.profs.username,
-            #                        self.profs.get_all_pokazaniya())
-            #except:
-            #    self.show_error("Ошибка сайта!", "Структура сайта изменена, обратитесь к разработчику!")
-            #    return
-
         self.model = QSqlTableModel(self, db=self.pokaz.db)
         self.model.setTable(self.profs.username)
         self.model.setEditStrategy(QSqlTableModel.OnManualSubmit)
+
+        if self.authorized:
+            #TODO: send to db pokazania in other connection
+            pokaz = self.profs.get_all_pokazaniya()
+            if pokaz is not None:
+                self.pokaz.save_all2db(self.profs.username, pokaz)
+
         self.model.select()
 
         self.model.setHeaderData(0, Qt.Horizontal, "Дата")

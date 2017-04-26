@@ -1,8 +1,8 @@
 import os
-from re import compile, match, search
+from re import compile, match
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
 import pickle
 import base64
 import platform
@@ -31,12 +31,6 @@ headers = {'User-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KH
             'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4',
             'Referer': 'http://cabinet.profjilkom.ru/node/1'}
 
-captcha_img = r'<img\ssrc="(/image_captcha/\d+/\d+)"\s(.+)'  #//*[@id="user-login-form"]/div/fieldset/img
-captcha_sid = r'<input\stype="hidden"\sname="captcha_sid"\sid="edit-captcha-sid"\svalue="(.+)"'  #//*[@id="edit-captcha-sid"]
-captcha_token = r'<input\stype="hidden"\sname="captcha_token"\sid="edit-captcha-token"\svalue="(.+)"'  #//*[@id="edit-captcha-token"]
-form_id_value = r'<input type="hidden"\sname="form_build_id"\sid=".+"\svalue="(.+)"'  #//*[@id="form-52f7f685bd015e6e7342ba36b143ab8d"]
-form_id = r'<input\stype="hidden"\sname="form_build_id"\sid="(.+)"\svalue=".+"'  #//*[@id="edit-user-login-block"]
-
 hvs_hvs_kuhnya = 'submitted[hvs][hvs_kuhnya]'
 hvs_hvs_vannaya = 'submitted[hvs][hvs_vannaya]'
 gvs_gvs_kuhnya = 'submitted[gvs][gvs_kuhnya]'
@@ -46,6 +40,7 @@ prochie_pokazaniya_t2_noch = 'submitted[prochie_pokazaniya][t2_noch]'
 potreblenie_tepla_schetchik_1 = 'submitted[potreblenie_tepla][schetchik_1]'
 adres_pomeshcheniya = 'submitted[dannye_zhilogo_pomeshcheniya][adres_pomeshcheniya]'
 nomer_licevogo_scheta = 'submitted[dannye_zhilogo_pomeshcheniya][nomer_licevogo_scheta]'
+#addons
 hvs_hvs_schetchik_3 = 'submitted[hvs][hvs_schetchik_3]'  #//*[@id="edit-submitted-hvs-hvs-schetchik-3"]
 hvs_hvs_schetchik_4 = 'submitted[hvs][schetchik_4]'  #//*[@id="edit-submitted-hvs-schetchik-4"]
 gvs_gvs_schetchik_3 = 'submitted[gvs][gvs_schetchik_3]' #//*[@id="edit-submitted-gvs-gvs-schetchik-3"]
@@ -296,7 +291,6 @@ class Conf:
     account = "ACCOUNT"
     COOKS = requests.utils.cookiejar_from_dict({'has_js': '1'})
     username = None
-    last_update = datetime.now().date().isoformat()
 
     def __init__(self):
         self.conf_file = os.path.join(get_conf_dir(), "prof.ini")
@@ -374,37 +368,30 @@ class Profjilcom(Conf):
         return r.status_code
 
     def get_auth_form_values(self):
-        sf_id = search(form_id, self.response)
-        if not sf_id:
-            raise SiteStructFail("No sf_id find")
-        self.form_id = sf_id.group(1)
+        tree = etree.HTML(self.response)
+        try:
+            self.form_id = tree.xpath('//*[@name="form_id"]')[0].get('value', '')
+            self.form_value = tree.xpath('//*[@name="form_build_id"]')[0].get('value', '')
+            self.captcha_sid = tree.xpath('//*[@id="edit-captcha-sid"]')[0].get('value', '')
+            self.captcha_token = tree.xpath('//*[@id="edit-captcha-token"]')[0].get('value', '')
+        except:
+            raise SiteStructFail("Cant find hidden inputs")
 
-        sf_id_val = search(form_id_value, self.response)
-        if not sf_id_val:
-            raise SiteStructFail("No sf_id_val find")
-        self.form_value = sf_id_val.group(1)
-        
-        ca_sid =  search(captcha_sid, self.response)
-        if not ca_sid:
-            raise SiteStructFail("No ca_sid find")
-        self.captcha_sid = ca_sid.group(1)
-        
-        ca_tok = search(captcha_token, self.response)
-        if not ca_tok:
-            raise SiteStructFail("No ca_tok find")
-        self.captcha_token = ca_tok.group(1)
-        
         return True
     
     def get_capcha_img(self):
-        s = search(captcha_img, self.response)
-        if not s:
+        tree = etree.HTML(self.response)
+
+        try:
+            capcha_url = urljoin(URL,
+                tree.xpath('//*[@id="user-login-form"]/div/fieldset/img')[0].get('src', ''))
+        except IndexError:
             raise SiteStructFail("No capcha img url find")
-        capcha_url = urljoin(URL, s.group(1))
+
         r = requests.get(capcha_url, headers=headers)
         r.close()
         if not r.ok:
-            raise ConnectionError("Coud not connect to %s" % URL)
+            raise ConnectionError("No capcha img on %s" % capcha_url)
         self.captcha_img = r.content
 
     
@@ -563,10 +550,14 @@ class Profjilcom(Conf):
                                )
         return ret
 
-    def get_all_pokazaniya(self):
+    def get_all_pokazaniya(self, force=False):
         # TODO: delet tested data
         #return [{'HVS_vanna': 38.0, 'HVS_kuhnya': 82.0, 'GVS_vanna': 48.0, 'GVS_kuhnya': 26.0, 'T1': 2616.0, 'T2': 718.0, 'Teplo': 11718.0, 'Date': '2017-03-26'}, {'HVS_vanna': 35.0, 'HVS_kuhnya': 78.0, 'GVS_vanna': 45.0, 'GVS_kuhnya': 25.0, 'T1': 2483.0, 'T2': 678.0, 'Teplo': 11174.0, 'Date': '2017-02-21'}, {'HVS_vanna': 30.0, 'HVS_kuhnya': 68.0, 'GVS_vanna': 39.0, 'GVS_kuhnya': 22.0, 'T1': 2016.0, 'T2': 578.0, 'Teplo': 9057.0, 'Date': '2016-12-26'}, {'HVS_vanna': 25.0, 'HVS_kuhnya': 64.0, 'GVS_vanna': 36.0, 'GVS_kuhnya': 21.0, 'T1': 1835.0, 'T2': 536.0, 'Teplo': 7999.0, 'Date': '2016-11-23'}, {'HVS_vanna': 22.0, 'HVS_kuhnya': 58.0, 'GVS_vanna': 32.0, 'GVS_kuhnya': 20.0, 'T1': 1603.0, 'T2': 473.0, 'Teplo': 7146.0, 'Date': '2016-10-25'}, {'HVS_vanna': 19.0, 'HVS_kuhnya': 53.0, 'GVS_vanna': 28.0, 'GVS_kuhnya': 18.0, 'T1': 1402.0, 'T2': 409.0, 'Teplo': 6477.0, 'Date': '2016-09-25'}, {'HVS_vanna': 16.0, 'HVS_kuhnya': 46.0, 'GVS_vanna': 24.0, 'GVS_kuhnya': 16.0, 'T1': 1268.0, 'T2': 335.0, 'Teplo': 6477.0, 'Date': '2016-08-23'}, {'HVS_vanna': 12.0, 'HVS_kuhnya': 39.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1155.0, 'T2': 267.0, 'Teplo': 6477.0, 'Date': '2016-07-24'}, {'HVS_vanna': 9.0, 'HVS_kuhnya': 33.0, 'GVS_vanna': 21.0, 'GVS_kuhnya': 15.0, 'T1': 1045.0, 'T2': 219.0, 'Teplo': 6477.0, 'Date': '2016-06-23'}, {'HVS_vanna': 7.0, 'HVS_kuhnya': 28.0, 'GVS_vanna': 17.0, 'GVS_kuhnya': 13.0, 'T1': 943.0, 'T2': 171.0, 'Teplo': 6477.0, 'Date': '2016-05-24'}, {'HVS_vanna': 5.0, 'HVS_kuhnya': 24.0, 'GVS_vanna': 13.0, 'GVS_kuhnya': 11.0, 'T1': 854.0, 'T2': 137.0, 'Teplo': 6450.0, 'Date': '2016-04-23'}, {'HVS_vanna': 2.0, 'HVS_kuhnya': 18.0, 'GVS_vanna': 7.0, 'GVS_kuhnya': 8.0, 'T1': 696.0, 'T2': 83.0, 'Teplo': 5889.0, 'Date': '2016-03-23'}, {'HVS_vanna': 1.0, 'HVS_kuhnya': 13.0, 'GVS_vanna': 2.0, 'GVS_kuhnya': 6.0, 'T1': 526.0, 'T2': 28.0, 'Teplo': 5062.0, 'Date': '2016-02-20'}, {'HVS_vanna': 0.0, 'HVS_kuhnya': 8.0, 'GVS_vanna': 0.0, 'GVS_kuhnya': 5.0, 'T1': 349.0, 'T2': 13.0, 'Teplo': 41569.0, 'Date': '2016-01-25'}]
         # get main page
+        cur = datetime.now().date()
+        if (cur - self.last_update) < timedelta(7) and not force:
+                return None
+
         r = requests.get(archive_url,
                          cookies=self.cookies, headers=headers)
         r.close()
