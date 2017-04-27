@@ -25,6 +25,7 @@ from prof import GVS_kuhnya, GVS_vanna, HVS_kuhnya, HVS_vanna, T1, T2, Teplo
 # https://m.habrahabr.ru/post/188816/
 # https://m.habrahabr.ru/post/325626/
 # https://bovs.org/post/144/
+# http://winpython.github.io/ all in one
 
 
 class AuthDialog(QtWidgets.QDialog):

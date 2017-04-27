@@ -12,6 +12,10 @@ OS = platform.system() # Darwin, Linux, Windows
 #http://stackoverflow.com/questions/34966303/how-to-save-load-cookies-to-from-qnetworkaccessmanager
 #http://webhamster.ru/mytetrashare/index/mtb0/1453285930d1wftkzohm
 
+#threads
+#https://dl.dropboxusercontent.com/s/e4tyivgb3vwsds0/simple_thread.py
+#https://nikolak.com/pyqt-threading-tutorial/
+
 import requests
 from configparser import ConfigParser
 from urllib.parse import urljoin
