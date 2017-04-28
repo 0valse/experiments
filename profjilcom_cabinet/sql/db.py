@@ -8,6 +8,9 @@ class DBFail(Exception):
     pass
 
 
+#example db woarking https://github.com/md2/pyhomelib/blob/master/pyhomelib/db.py
+#https://github.com/Freeseer/freeseer
+
 class MainDatabase(QSqlDatabase):
 	def __init__(self, dbname, *args, **kwargs):
 		super(MainDatabase, self).__init__(args, kwargs)
